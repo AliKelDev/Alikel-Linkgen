@@ -9,10 +9,10 @@
   <img alt="TypeScript" src="https://img.shields.io/badge/Powered%20by-TypeScript-3178C6?style=for-the-badge&logo=typescript"/>
 </div>
 
-
 ## ✨ Core Capabilities
 
 ### 🎯 Targeted Search Generation
+
 | Team Type           | Key Functions                          | Sample Use Cases                 |
 |---------------------|----------------------------------------|-----------------------------------|
 | **Sales Teams**     | Technical decision makers, Security    | Enterprise account mapping        |
@@ -20,6 +20,7 @@
 | **Job Seekers**     | Position discovery, Team composition   | Strategic career targeting        |
 
 ### 🌐 Advanced Domain Management
+
 ```diff
 + Intelligent .com/.fr/.es/.it prioritization
 + 100+ global TLD support with auto-suggest
@@ -97,16 +98,22 @@ Q4	🧠 AI-Powered Domain Validation	Backlog
 Fork & Clone the repository
 
 Create feature branch:
+
+bash
+Copy
 git checkout -b feature/[name]-[description]
-
 Commit changes with semantic messages:
-git commit -m "feat: add domain validation module"
 
+bash
+Copy
+git commit -m "feat: add domain validation module"
 Push to branch & open PR
 
 📜 License & Credits
 MIT Licensed - Full details in LICENSE
 
 Crafted with precision by Jordan.M
+
 UX Design by Alice
+
 Maintained by the LinkForge OSS Collective
