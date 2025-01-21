@@ -9,7 +9,6 @@
   <img alt="TypeScript" src="https://img.shields.io/badge/Powered%20by-TypeScript-3178C6?style=for-the-badge&logo=typescript"/>
 </div>
 
-![LinkForge Interface Demo](https://via.placeholder.com/800x400.png?text=LinkForge+Demo+GIF+Placeholder)
 
 ## ✨ Core Capabilities
 
