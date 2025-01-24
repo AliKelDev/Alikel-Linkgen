@@ -21,6 +21,8 @@ const BulkLinkGenerator = () => {
   const [generatedLinks, setGeneratedLinks] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
   const { currentRole, roleConfig } = useRole();
+  // Add state for bucket selector visibility
+  const [showBucketSelector, setShowBucketSelector] = useState(true);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem(`searchHistory_${currentRole}`);
@@ -28,6 +30,11 @@ const BulkLinkGenerator = () => {
       setSearchHistory(JSON.parse(savedHistory));
     }
   }, [currentRole]);
+
+  // Toggle function for bucket selector
+  const toggleBucketSelector = () => {
+    setShowBucketSelector(!showBucketSelector);
+  };
 
   const getRoleSpecificLinks = (company, domain) => {
     switch (currentRole) {
@@ -38,7 +45,7 @@ const BulkLinkGenerator = () => {
       case 'jobseeker':
         return generateJobSeekerLinks(company, domain);
       default:
-        return generateSalesLinks(company, domain); // fallback to sales
+        return generateSalesLinks(company, domain);
     }
   };
 
@@ -83,6 +90,13 @@ const BulkLinkGenerator = () => {
             {roleConfig.title} Link Generator
           </h1>
           <p className="text-lg text-blue-600">{roleConfig.description}</p>
+          {/* Add Bucket Selector Toggle Button */}
+          <button
+            onClick={toggleBucketSelector}
+            className="mt-4 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors shadow-sm"
+          >
+            {showBucketSelector ? 'Hide Bucket Selector' : 'Show Bucket Selector'}
+          </button>
         </div>
 
         <RoleSelector />
@@ -109,6 +123,8 @@ const BulkLinkGenerator = () => {
                           prev.map(link => link.id === updatedLink.id ? updatedLink : link)
                         );
                       }}
+                      // Pass the showBucketSelector state as prop
+                      showBucketSelector={showBucketSelector}
                     />
                   ))}
               </motion.div>

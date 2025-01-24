@@ -4,7 +4,7 @@ import DomainList from './DomainList';
 import BucketSelector from '../../../components/BucketSelector';
 import { generateLinks } from '../../../components/linkUtils';
 
-const GeneratedLinkCard = ({ linkData, onUpdateLink }) => {
+const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
   const [copiedStates, setCopiedStates] = useState({});
 
   const handleDomainSelect = (domain) => {
@@ -39,10 +39,13 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink }) => {
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-blue-900">{linkData.company}</h3>
-          <BucketSelector
-            selectedBucket={linkData.bucket}
-            onChange={handleBucketSelect}
-          />
+          {/* Conditional rendering of BucketSelector */}
+          {showBucketSelector && (
+            <BucketSelector
+              selectedBucket={linkData.bucket}
+              onChange={handleBucketSelect}
+            />
+          )}
         </div>
         
         <DomainList
