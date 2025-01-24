@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { ExternalLink, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const DomainList = ({ 
   priorityDomains, 
@@ -37,34 +37,33 @@ const DomainList = ({
 
   return (
     <div>
-      {/* Priority Domains Row */}
       <div className="flex flex-wrap gap-3 pb-4 border-b border-blue-200">
         {priorityDomains.map(renderDomainButton)}
         
-        <button
+        <motion.button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 w-full justify-center"
+          whileTap={{ scale: 0.98 }}
         >
-          {isExpanded ? (
-            <>
-              <ChevronUp className="w-5 h-5" />
-              Show Less
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-5 h-5" />
-              Show More ({secondaryDomains.length} domains)
-            </>
-          )}
-        </button>
+          <motion.span
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+          >
+            <ChevronDown className="w-5 h-5" />
+          </motion.span>
+          {isExpanded ? 'Show Less' : `More Domains (${secondaryDomains.length})`}
+        </motion.button>
       </div>
 
-      {/* Secondary Domains (Expandable) */}
       <AnimatePresence>
         {isExpanded && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+          >
             {secondaryDomains.map(renderDomainButton)}
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

@@ -1,27 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 const determineBucket = (devTeamSize, securityTeamSize) => {
   if (!devTeamSize || !securityTeamSize) return '';
   
-  // Tech Giants
   if (devTeamSize >= 10000 && securityTeamSize >= 3000) return 'TECH_GIANT';
-  // Major Enterprise
   if (devTeamSize >= 5000 && securityTeamSize >= 1500) return 'MAJOR_ENTERPRISE';
-  // Large Enterprise
   if (devTeamSize >= 2000 && securityTeamSize >= 600) return 'LARGE_ENTERPRISE';
-  // Enterprise
   if (devTeamSize >= 1000 && securityTeamSize >= 300) return 'ENTERPRISE';
-  // Growth Plus
   if (devTeamSize >= 500 && securityTeamSize >= 150) return 'GROWTH_PLUS';
-  // Growth
   if (devTeamSize >= 200 && securityTeamSize >= 60) return 'GROWTH';
-  // Late Startup
   if (devTeamSize >= 100 && securityTeamSize >= 30) return 'LATE_STARTUP';
-  // Mid Startup
   if (devTeamSize >= 50 && securityTeamSize >= 15) return 'MID_STARTUP';
-  // Early Startup
   if (devTeamSize >= 20 && securityTeamSize >= 6) return 'EARLY_STARTUP';
-  // Pre-Seed
   return 'PRE_SEED';
 };
 
@@ -95,61 +86,68 @@ const BucketSelector = ({ selectedBucket, onChange }) => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        <div className="space-y-1">
-          <label htmlFor="devteam" className="block text-sm font-medium text-gray-700">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-blue-900">
             Development Team Size
           </label>
           <input
-            id="devteam"
             type="number"
             value={devTeamSize}
             onChange={(e) => setDevTeamSize(e.target.value)}
-            className="p-2 border border-gray-300 rounded text-sm w-40"
-            min="0"
+            className="w-full p-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
             placeholder="Enter number"
+            min="0"
           />
         </div>
         
-        <div className="space-y-1">
-          <label htmlFor="securityteam" className="block text-sm font-medium text-gray-700">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-blue-900">
             Security Team Size
           </label>
           <input
-            id="securityteam"
             type="number"
             value={securityTeamSize}
             onChange={(e) => setSecurityTeamSize(e.target.value)}
-            className="p-2 border border-gray-300 rounded text-sm w-40"
-            min="0"
+            className="w-full p-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
             placeholder="Enter number"
+            min="0"
           />
         </div>
       </div>
 
       {selectedBucket && (
-        <div className="text-sm">
-          <span className="font-medium">Selected: </span>
-          <span className={`inline-block px-2 py-1 rounded text-white ${buckets.find(b => b.value === selectedBucket)?.color}`}>
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-sm bg-blue-50 p-3 rounded-lg"
+        >
+          <span className="font-medium text-blue-900">Selected Bucket: </span>
+          <span className={`px-3 py-1 rounded-md text-white ${buckets.find(b => b.value === selectedBucket)?.color}`}>
             {getBucketDescription(selectedBucket)}
           </span>
-        </div>
+        </motion.div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {buckets.map((bucket) => (
-          <button
+          <motion.button
             key={bucket.value}
             onClick={() => onChange(bucket.value)}
-            className={`
-              px-4 py-2 rounded text-sm text-white transition-colors
-              ${bucket.color}
-              ${selectedBucket === bucket.value ? 'ring-2 ring-offset-2 ring-black' : ''}
-            `}
+            className={`p-3 rounded-xl text-left transition-all ${bucket.color} ${
+              selectedBucket === bucket.value 
+                ? 'ring-2 ring-blue-500 ring-offset-2' 
+                : 'opacity-90 hover:opacity-100'
+            }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            {bucket.label}
-          </button>
+            <div className="font-medium text-white">{bucket.label.split('(')[0]}</div>
+            <div className="text-xs text-white/80 mt-1">
+              {bucket.label.match(/\(([^)]+)\)/)[1]}
+            </div>
+          </motion.button>
         ))}
       </div>
     </div>

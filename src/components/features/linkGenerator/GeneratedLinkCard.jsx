@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Copy, Check, ExternalLink } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import DomainList from './DomainList';
 import BucketSelector from '../../../components/BucketSelector';
 import { generateLinks } from '../../../components/linkUtils';
@@ -39,7 +40,6 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-blue-900">{linkData.company}</h3>
-          {/* Conditional rendering of BucketSelector */}
           {showBucketSelector && (
             <BucketSelector
               selectedBucket={linkData.bucket}
@@ -56,7 +56,6 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
           companyName={linkData.company}
         />
 
-        {/* Links Section */}
         <div className="mt-6 space-y-4">
           {Object.entries(linkData.links).map(([type, linkInfo]) => (
             <div key={type} className="flex items-center justify-between gap-4 p-4 bg-white rounded-lg shadow-sm">
@@ -72,17 +71,38 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </div>
-              <button
+              <motion.button
                 onClick={() => handleCopy(type, linkInfo.link, linkInfo.description)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all 
+                  ${copiedStates[type] 
+                    ? 'bg-green-500 hover:bg-green-600' 
+                    : 'bg-blue-500 hover:bg-blue-600'}
+                  text-white shadow-sm hover:shadow-md`}
+                whileTap={{ scale: 0.95 }}
               >
-                {copiedStates[type] ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
+                <AnimatePresence mode="wait">
+                  {copiedStates[type] ? (
+                    <motion.span
+                      key="check"
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                    >
+                      <Check className="w-4 h-4" />
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="copy"
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
                 {copiedStates[type] ? 'Copied!' : 'Copy'}
-              </button>
+              </motion.button>
             </div>
           ))}
         </div>
