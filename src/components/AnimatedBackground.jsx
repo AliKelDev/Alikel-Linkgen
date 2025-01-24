@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import WelcomePage from '../pages/WelcomePage';
 import HomePage from '../pages/HomePage';
 
 const AnimatedBackground = () => {
@@ -67,8 +68,9 @@ const AnimatedBackground = () => {
 
       {/* Main content */}
       <div className="relative z-10">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/generator" element={<HomePage />} />
         </Routes>
       </div>
 
