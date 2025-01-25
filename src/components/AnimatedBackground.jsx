@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import WelcomePage from '../pages/WelcomePage';
@@ -8,7 +8,12 @@ import { Bot, X } from 'lucide-react';
 const AnimatedBackground = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showHelp, setShowHelp] = useState(false);
+  const showHelpRef = useRef(showHelp);
   const location = useLocation();
+
+  useEffect(() => {
+    showHelpRef.current = showHelp;
+  }, [showHelp]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -19,7 +24,9 @@ const AnimatedBackground = () => {
     };
 
     const handleScroll = () => {
-      setShowHelp(window.scrollY > 300 && !showHelp);
+      if (window.scrollY > 300 && !showHelpRef.current) {
+        setShowHelp(true);
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
