@@ -78,10 +78,10 @@ const FINANCE_CONFIG = {
 git clone --depth=1 https://github.com/AliKelDev/LinkForge.git
 
 # Install dependencies
-yarn fortress  # alias for: yarn install --frozen-lockfile
+npm install
 
 # Launch dev server
-yarn ignite
+npm run dev
 ```
 
 ## 🌍 Connect
