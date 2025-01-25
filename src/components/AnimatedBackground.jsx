@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import WelcomePage from '../pages/WelcomePage';
 import HomePage from '../pages/HomePage';
+import { Bot, X } from 'lucide-react';
 
 const AnimatedBackground = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [showHelp, setShowHelp] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -15,8 +18,17 @@ const AnimatedBackground = () => {
       });
     };
 
+    const handleScroll = () => {
+      setShowHelp(window.scrollY > 300 && !showHelp);
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   return (
@@ -73,6 +85,27 @@ const AnimatedBackground = () => {
           <Route path="/generator" element={<HomePage />} />
         </Routes>
       </div>
+
+      {/* Scroll-triggered help message */}
+      {showHelp && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl flex items-center gap-3 z-50"
+        >
+          <Bot className="w-6 h-6 text-blue-600" />
+          <div>
+            <p className="font-medium">Hi! I'm Kei - LinkForge AI</p>
+            <p className="text-sm">Need help with prospect research?</p>
+          </div>
+          <button 
+            onClick={() => setShowHelp(false)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
 
       {/* Radial gradient overlay */}
       <div 

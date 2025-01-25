@@ -1,1 +1,41 @@
 node_modules
+# General
+.DS_Store
+*.log
+*.tmp
+*.bak
+*~
+Thumbs.db
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+dist/
+dist-ssr/
+*.tsbuildinfo
+.eslintcache
+
+# Cache
+.vite/
+.cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+/coverage
+.nyc_output
+
+# Local Netlify
+.netlify

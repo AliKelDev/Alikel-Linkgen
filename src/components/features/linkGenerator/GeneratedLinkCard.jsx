@@ -4,23 +4,47 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DomainList from './DomainList';
 import BucketSelector from '../../../components/BucketSelector';
 import { generateLinks } from '../../../components/linkUtils';
+import AIChatAssistant from './AIChatAssistant';
+
+const CompanySelector = ({ companies, currentCompany, onChange }) => (
+  <div className="flex flex-wrap gap-2 mb-4">
+    {companies.map((companyData) => (
+      <button
+        key={companyData.id}
+        onClick={() => onChange(companyData)}
+        className={`px-3 py-1 rounded-lg text-sm ${
+          currentCompany.id === companyData.id
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 hover:bg-gray-200'
+        }`}
+      >
+        {companyData.company}
+      </button>
+    ))}
+  </div>
+);
 
 const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
   const [copiedStates, setCopiedStates] = useState({});
+  const [selectedCompany, setSelectedCompany] = useState(linkData);
 
   const handleDomainSelect = (domain) => {
-    onUpdateLink({
-      ...linkData,
+    const updatedLink = {
+      ...selectedCompany,
       selectedDomain: domain,
-      links: generateLinks(linkData.company, domain)
-    });
+      links: generateLinks(selectedCompany.company, domain)
+    };
+    setSelectedCompany(updatedLink);
+    onUpdateLink(updatedLink);
   };
 
   const handleBucketSelect = (bucket) => {
-    onUpdateLink({
-      ...linkData,
+    const updatedLink = {
+      ...selectedCompany,
       bucket
-    });
+    };
+    setSelectedCompany(updatedLink);
+    onUpdateLink(updatedLink);
   };
 
   const handleCopy = async (type, link, description) => {
@@ -39,25 +63,25 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-md overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-blue-900">{linkData.company}</h3>
+          <h3 className="text-xl font-bold text-blue-900">{selectedCompany.company}</h3>
           {showBucketSelector && (
             <BucketSelector
-              selectedBucket={linkData.bucket}
+              selectedBucket={selectedCompany.bucket}
               onChange={handleBucketSelect}
             />
           )}
         </div>
         
         <DomainList
-          priorityDomains={linkData.priorityDomains}
-          secondaryDomains={linkData.secondaryDomains}
-          selectedDomain={linkData.selectedDomain}
+          priorityDomains={selectedCompany.priorityDomains}
+          secondaryDomains={selectedCompany.secondaryDomains}
+          selectedDomain={selectedCompany.selectedDomain}
           onDomainSelect={handleDomainSelect}
-          companyName={linkData.company}
+          companyName={selectedCompany.company}
         />
 
         <div className="mt-6 space-y-4">
-          {Object.entries(linkData.links).map(([type, linkInfo]) => (
+          {Object.entries(selectedCompany.links).map(([type, linkInfo]) => (
             <div key={type} className="flex items-center justify-between gap-4 p-4 bg-white rounded-lg shadow-sm">
               <div className="flex-1">
                 <div className="font-semibold text-blue-900 mb-1">{linkInfo.title}</div>
@@ -106,6 +130,12 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
             </div>
           ))}
         </div>
+
+        <AIChatAssistant 
+          company={selectedCompany.company}
+          domain={selectedCompany.selectedDomain}
+          companies={[selectedCompany]}
+        />
       </div>
     </div>
   );

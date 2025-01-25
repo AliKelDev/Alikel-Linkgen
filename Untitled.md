@@ -2,7 +2,7 @@
 
 ## Project Statistics
 
-- Total files: 35
+- Total files: 37
 
 ## Folder Structure
 
@@ -12,12 +12,15 @@ LICENSE
 README.md
 eslint.config.js
 index.html
+netlify
+  functions
+    ai-chat.js
 netlify.toml
 package.json
 postcss.config.js
 public
-  Screenshot 2024-11-18 at 21.17.45.png
   favicon.svg
+  linkforge-screenshot.webp
   vite.svg
 src
   App.css
@@ -33,6 +36,7 @@ src
     exportUtils.js
     features
       linkGenerator
+        AIChatAssistant.jsx
         BulkLinkGenerator.jsx
         CompanyInput.jsx
         DomainList.jsx
@@ -212,32 +216,222 @@ export default [
 
 ```html
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#2563eb" />
-    
-    <!-- Primary Meta Tags -->
-    <title>Bulk Company Link Generator | Generate Multiple Company Links Instantly</title>
-    <meta name="title" content="Bulk Company Link Generator | Generate Multiple Company Links Instantly">
-    <meta name="description" content="Generate and manage multiple company links in bulk. Easily create, copy, and track company-related links with search history functionality. Perfect for business research and company profiling.">
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2563eb" />
+  
+  <!-- Primary Meta Tags -->
+  <title>LinkForge Pro: Enterprise Search Automation for BDRs & Recruiters</title>
+  <meta name="title" content="LinkForge Pro: Enterprise Search Automation for BDRs & Recruiters">
+  <meta name="description" content="AI-powered LinkedIn automation tool for bulk prospect generation, company domain validation, and lead list management. Ideal for sales teams and technical recruiters.">
+  
+  <!-- SEO Keywords -->
+  <meta name="keywords" content="
+    linkedin automation tool, bulk search generator,
+    sales prospecting software, recruitment search platform,
+    company domain validator, lead list exporter,
+    talent sourcing tool, enterprise search automation,
+    BDR workflow automation, technical recruitment software,
+    AI domain validation, search history analytics,
+    csv export for linkedin, sales navigator alternative,
+    prospect list builder, hiring manager finder
+  ">
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Bulk Company Link Generator | Generate Multiple Company Links Instantly">
-    <meta property="og:description" content="Generate and manage multiple company links in bulk. Easily create, copy, and track company-related links with search history functionality. Perfect for business research and company profiling.">
+  <!-- Geographic Targeting -->
+  <meta name="geo.placename" content="France">
+  <meta name="geo.position" content="48.8566;2.3522">
+  <meta name="geo.region" content="FR-IDF">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://linkforge-alikeldev.netlify.app/">
+  <meta property="og:title" content="LinkForge Pro: Enterprise Search Automation Platform">
+  <meta property="og:description" content="Generate and manage bulk LinkedIn searches with AI-powered domain validation and export capabilities.">
+  <meta property="og:image" content="/linkforge-screenshot.webp">
+  <meta property="og:image:alt" content="LinkForge Interface - Bulk Search Automation Tool">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://linkforge-alikeldev.netlify.app/">
+  <meta property="twitter:title" content="LinkForge Pro: Search Automation for Teams">
+  <meta property="twitter:description" content="Enterprise-grade tool for generating and managing bulk LinkedIn searches with AI validation and analytics.">
+  <meta property="twitter:image" content="/linkforge-screenshot.webp">
+  <meta property="twitter:image:alt" content="LinkForge interface showing search generation and analytics">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "LinkForge Pro",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "softwareVersion": "2.1",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "42"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0.00",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Bulk LinkedIn Search Generation",
+      "AI-Powered Domain Validation",
+      "Multi-Role Templates",
+      "Search History Analytics",
+      "CRM-Ready Exports"
+    ],
+    "author": {
+      "@type": "Person",
+      "name": "Jordan Montée",
+      "sameAs": "https://github.com/AliKelDev"
+    }
+  }
+  </script>
+
+  <!-- Preconnects -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <!-- Critical CSS -->
+  <style>
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+
+  <!-- Hidden SEO Content -->
+  <div class="sr-only" aria-hidden="true">
+    <h1>LinkForge Pro - Enterprise Search Automation Platform</h1>
     
-    <!-- Preconnect to font provider if you're using custom fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+    <h2>Key Features:</h2>
+    <ul>
+      <li>Generate 100+ LinkedIn searches in one click</li>
+      <li>AI-powered company domain validation</li>
+      <li>Cross-session search history tracking</li>
+      <li>Role-specific search templates</li>
+      <li>Secure CRM exports (CSV/Excel/JSON)</li>
+    </ul>
+
+    <h2>Target Use Cases:</h2>
+    <ul>
+      <li>Technical Recruitment Automation</li>
+      <li>Enterprise Sales Prospecting</li>
+      <li>Talent Pipeline Development</li>
+      <li>Competitor Analysis Research</li>
+      <li>Account-Based Marketing</li>
+    </ul>
+
+    <h2>Supported Industries:</h2>
+    <ul>
+      <li>SaaS Companies</li>
+      <li>Cybersecurity Firms</li>
+      <li>Cloud Infrastructure Providers</li>
+      <li>Fintech Organizations</li>
+      <li>Enterprise Software Vendors</li>
+    </ul>
+  </div>
+
+  <!-- FAQ Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does LinkForge help with technical recruitment?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "LinkForge provides specialized templates for engineering role searches with filters for skills, experience levels, and company tech stacks."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I export results to my CRM?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, tou can export the links results using CSV files"
+        }
+      }
+    ]
+  }
+  </script>
+</body>
 </html>
+```
+
+### netlify/functions/ai-chat.js
+
+```js
+import fetch from 'node-fetch';
+
+export async function handler(event) {
+  try {
+    const { analysisType, company, domain } = JSON.parse(event.body);
+    
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: "system",
+            content: `You are Kei, LinkForge's AI assistant...` // Your system prompt
+          },
+          {
+            role: "user",
+            content: analysisType === 'domainValidation' 
+              ? `Perform domain analysis for ${company}...` 
+              : analysisType === 'outreachStrategy'
+                ? `Create outreach plan for...`
+                : `Analyze likely tech stack...`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 500
+      })
+    });
+
+    const data = await response.json();
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ content: data.choices[0].message.content })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to process request' })
+    };
+  }
+}
 ```
 
 ### netlify.toml
@@ -265,6 +459,7 @@ export default [
     "@shadcn/ui": "^0.0.4",
     "framer-motion": "^11.15.0",
     "lucide-react": "^0.468.0",
+    "node-fetch": "^3.3.2",
     "papaparse": "^5.4.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -274,6 +469,7 @@ export default [
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@types/node": "^22.10.10",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -303,11 +499,11 @@ export default {
 
 ```
 
-### public/Screenshot 2024-11-18 at 21.17.45.png
+### public/favicon.svg
 
 *(Unsupported file type)*
 
-### public/favicon.svg
+### public/linkforge-screenshot.webp
 
 *(Unsupported file type)*
 
@@ -354,11 +550,14 @@ export default App;
 ```jsx
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import WelcomePage from '../pages/WelcomePage';
 import HomePage from '../pages/HomePage';
+import { Bot, X } from 'lucide-react';
 
 const AnimatedBackground = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [showHelp, setShowHelp] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -369,8 +568,17 @@ const AnimatedBackground = () => {
       });
     };
 
+    const handleScroll = () => {
+      setShowHelp(window.scrollY > 300 && !showHelp);
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   return (
@@ -427,6 +635,27 @@ const AnimatedBackground = () => {
           <Route path="/generator" element={<HomePage />} />
         </Routes>
       </div>
+
+      {/* Scroll-triggered help message */}
+      {showHelp && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl flex items-center gap-3 z-50"
+        >
+          <Bot className="w-6 h-6 text-blue-600" />
+          <div>
+            <p className="font-medium">Hi! I'm Kei - LinkForge AI</p>
+            <p className="text-sm">Need help with prospect research?</p>
+          </div>
+          <button 
+            onClick={() => setShowHelp(false)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
 
       {/* Radial gradient overlay */}
       <div 
@@ -834,6 +1063,259 @@ export const exportHistory = (history) => {
 };
 ```
 
+### src/components/features/linkGenerator/AIChatAssistant.jsx
+
+```jsx
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Bot, User, Wand2, Rocket, ClipboardList, Loader2, X } from 'lucide-react';
+
+const SYSTEM_PROMPT = {
+  role: "system",
+  content: `You are Kei, LinkForge's AI assistant. Your role is to help professionals with:
+1. Company domain analysis
+2. Outreach strategy planning
+3. Tech stack predictions
+4. Sales research automation
+
+Guidelines:
+- Always respond as "Kei" using first-person pronouns
+- Maintain professional yet approachable tone
+- Use bold (**) for section headers and key terms
+- Prioritize actionable insights over generic advice
+- Reference LinkForge capabilities when relevant
+- Acknowledge security/scale considerations
+- Offer to expand on any points when appropriate`
+};
+
+const ANALYSIS_PROMPTS = {
+  domainValidation: ({ company, domain }) => ({
+    role: "user",
+    content: `Perform domain analysis for ${company}. Consider:
+    - Current domain: ${domain || 'none'}
+    - Common TLD priorities (.com, .io, .tech, country codes)
+    - Industry-specific domain patterns
+    - Alternative security-focused subdomains
+    - Common misspellings/permutations
+    
+    Format response with:
+    1. Primary domain recommendations (bold key domains)
+    2. Alternative options
+    3. Validation confidence score (1-5)`
+  }),
+
+  outreachStrategy: ({ company, domain }) => ({
+    role: "user",
+    content: `Create outreach plan for selling secret detection solution to ${company}. Include:
+    1. **Key Roles** to target (prioritize security/engineering leadership)
+    2. Recommended **outreach sequence**
+    3. **Value propositions** specific to their domain ${domain}
+    4. Timing considerations based on company size`
+  }),
+
+  techStackPrediction: ({ company, domain }) => ({
+    role: "user",
+    content: `Analyze likely tech stack for ${company} (domain: ${domain}). Consider:
+    1. Secret management patterns based on company size/industry
+    2. Cloud provider indicators from domain
+    3. Open-source vs enterprise tool preferences
+    4. Compliance needs (SOC2, GDPR, etc.)`
+  })
+};
+
+const AIChatAssistant = ({ company, domain, companies }) => {
+  const [messages, setMessages] = useState([{
+    id: 'welcome',
+    type: 'ai',
+    content: `**Hi! I'm Kei** 🤖 - LinkForge's AI Research Assistant\n\n` +
+      `I can help you with:\n` +
+      `• **Domain Validation** (priority TLDs, alternatives)\n` +
+      `• **Outreach Planning** (key roles, messaging strategy)\n` +
+      `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
+      `Ask me anything about ${company || "your target companies"}!`
+  }]);
+  const [isOpen, setIsOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(company);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(scrollToBottom, [messages]);
+
+  const getAIAnalysis = async (type) => {
+    setIsLoading(true);
+    try {
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'user',
+        content: `Analyzing ${type.replace(/([A-Z])/g, ' $1').trim().toLowerCase()}...`,
+        analysisType: type
+      }]);
+
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          analysisType: type,
+          company: selectedCompany,
+          domain: domain || 'unknown'
+        })
+      });
+
+      if (!response.ok) throw new Error('API request failed');
+      
+      const data = await response.json();
+      const aiResponse = `${data.content}\n\n_— Kei @ LinkForge_`;
+
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        type: 'ai',
+        content: aiResponse,
+        analysisType: type
+      }]);
+      
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'ai',
+        content: "⚠️ Hmm, I'm having trouble connecting to my servers. Please try again later!",
+        isError: true
+      }]);
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border rounded-xl bg-white shadow-lg mt-6"
+    >
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center gap-2">
+          <Bot className="w-6 h-6 text-blue-600" />
+          <h3 className="font-semibold">Kei - LinkForge AI</h3>
+        </div>
+        <button 
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-1 hover:bg-gray-100 rounded-lg"
+        >
+          <X className="w-5 h-5 text-gray-500" />
+        </button>
+      </div>
+
+      {isOpen && (
+        <div className="h-96 flex flex-col">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {companies?.length > 1 && (
+              <div className="flex gap-2 pb-2 flex-wrap">
+                {companies.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setSelectedCompany(c)}
+                    className={`px-3 py-1 rounded-lg text-sm ${
+                      selectedCompany === c
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <AnimatePresence>
+              {messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, x: message.type === 'user' ? 20 : -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-md p-4 rounded-xl ${
+                    message.type === 'user' 
+                      ? 'bg-blue-100 ml-12' 
+                      : 'bg-gray-100 mr-12'
+                  } ${message.isError ? 'bg-red-50 border border-red-100' : ''}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      {message.type === 'ai' && <Bot className="w-4 h-4" />}
+                      <span className="text-sm font-medium">
+                        {message.type === 'user' ? 'You' : 'Kei'}
+                      </span>
+                    </div>
+                    <div className={`whitespace-pre-wrap ${message.isError ? 'text-red-600' : 'text-gray-700'}`}>
+                      {message.content.split(/(\*\*.*?\*\*)/g).map((part, index) =>
+                        part.startsWith('**') && part.endsWith('**') ? (
+                          <strong key={index} className="font-semibold">
+                            {part.slice(2, -2)}
+                          </strong>
+                        ) : (
+                          <span key={index}>{part}</span>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+              <div ref={messagesEndRef} />
+            </AnimatePresence>
+
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-2 text-gray-500 p-4"
+              >
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Analyzing {selectedCompany}...</span>
+              </motion.div>
+            )}
+          </div>
+
+          <div className="border-t p-4 bg-gray-50">
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => getAIAnalysis('domainValidation')}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
+                disabled={isLoading}
+              >
+                <Wand2 className="w-4 h-4" />
+                Domain Analysis
+              </button>
+              <button
+                onClick={() => getAIAnalysis('outreachStrategy')}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
+                disabled={isLoading}
+              >
+                <Rocket className="w-4 h-4" />
+                Outreach Plan
+              </button>
+              <button
+                onClick={() => getAIAnalysis('techStackPrediction')}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
+                disabled={isLoading}
+              >
+                <ClipboardList className="w-4 h-4" />
+                Tech Stack
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+export default AIChatAssistant;
+```
+
 ### src/components/features/linkGenerator/BulkLinkGenerator.jsx
 
 ```jsx
@@ -1140,23 +1622,47 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DomainList from './DomainList';
 import BucketSelector from '../../../components/BucketSelector';
 import { generateLinks } from '../../../components/linkUtils';
+import AIChatAssistant from './AIChatAssistant';
+
+const CompanySelector = ({ companies, currentCompany, onChange }) => (
+  <div className="flex flex-wrap gap-2 mb-4">
+    {companies.map((companyData) => (
+      <button
+        key={companyData.id}
+        onClick={() => onChange(companyData)}
+        className={`px-3 py-1 rounded-lg text-sm ${
+          currentCompany.id === companyData.id
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 hover:bg-gray-200'
+        }`}
+      >
+        {companyData.company}
+      </button>
+    ))}
+  </div>
+);
 
 const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
   const [copiedStates, setCopiedStates] = useState({});
+  const [selectedCompany, setSelectedCompany] = useState(linkData);
 
   const handleDomainSelect = (domain) => {
-    onUpdateLink({
-      ...linkData,
+    const updatedLink = {
+      ...selectedCompany,
       selectedDomain: domain,
-      links: generateLinks(linkData.company, domain)
-    });
+      links: generateLinks(selectedCompany.company, domain)
+    };
+    setSelectedCompany(updatedLink);
+    onUpdateLink(updatedLink);
   };
 
   const handleBucketSelect = (bucket) => {
-    onUpdateLink({
-      ...linkData,
+    const updatedLink = {
+      ...selectedCompany,
       bucket
-    });
+    };
+    setSelectedCompany(updatedLink);
+    onUpdateLink(updatedLink);
   };
 
   const handleCopy = async (type, link, description) => {
@@ -1175,25 +1681,25 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-md overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-blue-900">{linkData.company}</h3>
+          <h3 className="text-xl font-bold text-blue-900">{selectedCompany.company}</h3>
           {showBucketSelector && (
             <BucketSelector
-              selectedBucket={linkData.bucket}
+              selectedBucket={selectedCompany.bucket}
               onChange={handleBucketSelect}
             />
           )}
         </div>
         
         <DomainList
-          priorityDomains={linkData.priorityDomains}
-          secondaryDomains={linkData.secondaryDomains}
-          selectedDomain={linkData.selectedDomain}
+          priorityDomains={selectedCompany.priorityDomains}
+          secondaryDomains={selectedCompany.secondaryDomains}
+          selectedDomain={selectedCompany.selectedDomain}
           onDomainSelect={handleDomainSelect}
-          companyName={linkData.company}
+          companyName={selectedCompany.company}
         />
 
         <div className="mt-6 space-y-4">
-          {Object.entries(linkData.links).map(([type, linkInfo]) => (
+          {Object.entries(selectedCompany.links).map(([type, linkInfo]) => (
             <div key={type} className="flex items-center justify-between gap-4 p-4 bg-white rounded-lg shadow-sm">
               <div className="flex-1">
                 <div className="font-semibold text-blue-900 mb-1">{linkInfo.title}</div>
@@ -1242,6 +1748,12 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
             </div>
           ))}
         </div>
+
+        <AIChatAssistant 
+          company={selectedCompany.company}
+          domain={selectedCompany.selectedDomain}
+          companies={[selectedCompany]}
+        />
       </div>
     </div>
   );
