@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Github, Linkedin, BookOpenText, Briefcase, Rocket, Code2, Sparkles } from 'lucide-react';
+import { Github, Linkedin, BookOpenText, Briefcase, Rocket, Code2, Filter } from 'lucide-react';
 
 const WelcomePage = () => {
   const professionalLinks = [
@@ -9,140 +9,148 @@ const WelcomePage = () => {
       icon: Briefcase,
       label: "Web Agency",
       url: "https://webpixelle3.netlify.app/",
-      color: "text-purple-400"
     },
     {
       icon: Linkedin,
       label: "Company Profile",
       url: "https://www.linkedin.com/company/pixelle-3",
-      color: "text-blue-400"
     },
     {
       icon: Github,
       label: "Code Portfolio",
       url: "https://github.com/AliKelDev",
-      color: "text-gray-400"
     },
     {
       icon: BookOpenText,
       label: "Tech Blog",
       url: "https://aliceleiserblog.netlify.app/",
-      color: "text-green-400"
     }
   ];
 
   const features = [
     {
       icon: Rocket,
-      title: "Enterprise Solutions",
-      description: "Generate bulk search URLs with AI-powered domain validation"
+      title: "Bulk URL Generator",
+      description: "Generate hundreds of LinkedIn search URLs instantly with smart domain validation and formatting."
     },
     {
       icon: Code2,
-      title: "Full-Stack Crafted",
-      description: "Built by AliKelDev using cutting-edge React & Node.js stack"
+      title: "Modern Stack",
+      description: "Built with React & Node.js for fast and reliable URL generation."
     },
     {
-      icon: Sparkles,
-      title: "Smart Automation",
-      description: "Integrated organizational insights and team size analysis"
+      icon: Filter,
+      title: "Company Filters",
+      description: "Fine-tune your search with filters for different company sectors and industries."
     }
   ];
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen px-4 py-20 text-center">
-      {/* Main Content */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 max-w-6xl"
-      >
-        {/* Title Section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.5 }}
-          className="mb-8"
-        >
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            LinkForge Pro
-          </h1>
-          <p className="mt-4 text-xl text-blue-200 font-medium">
-            By <span className="text-white">Ali Leiser</span> · CEO at{' '}
-            <span className="text-purple-300">Pixelle</span>
-          </p>
-        </motion.div>
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+      {/* Hero Section - Fixed overlapping issue here */}
+      <div className="relative overflow-hidden">
+        {/* Added pointer-events-none to background */}
+        <div className="absolute inset-0 bg-blue-600 opacity-5 pattern-grid pointer-events-none"></div>
+        
+        {/* Added z-index to content container */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-28 relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <h1 className="text-5xl md:text-6xl font-bold text-blue-900 mb-6">
+              LinkForge Pro
+            </h1>
+            <p className="text-xl md:text-2xl text-blue-700 mb-6 max-w-2xl mx-auto">
+              Supercharge your LinkedIn outreach with enterprise-grade search automation
+            </p>
+            <p className="text-md text-blue-600 mb-12 max-w-2xl mx-auto">
+              *Requires LinkedIn Sales Navigator license to access generated links
+            </p>
+            
+            {/* Working CTA Button */}
+            <div className="flex justify-center">
+              <motion.div whileHover={{ scale: 1.05 }} className="inline-block">
+                <Link
+                  to="/generator"
+                  className="bg-blue-600 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg"
+                >
+                  <Rocket className="w-5 h-5" />
+                  Start Generating URLs
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
 
-        {/* Professional Links Grid */}
-        <motion.div
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 max-w-3xl mx-auto"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-        >
+      {/* Features Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16">
+        <div className="grid md:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.2 }}
+              className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300"
+            >
+              <div className="bg-blue-50 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                <feature.icon className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-blue-900 mb-4">
+                {feature.title}
+              </h3>
+              <p className="text-blue-600 leading-relaxed">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Author Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="text-center mb-12">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <h2 className="text-2xl font-bold text-blue-900 mb-4">
+              Built by AliKelDev
+            </h2>
+            <p className="text-lg text-blue-600 mb-8">
+              Co-founder of Pixelle3
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Professional Links */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {professionalLinks.map((link, index) => (
             <motion.a
               key={link.url}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`p-4 rounded-xl backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all group ${link.color}`}
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 + index * 0.1 }}
+              className="group bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              whileHover={{ y: -4 }}
             >
-              <link.icon className="w-8 h-8 mb-2 mx-auto transition-transform group-hover:scale-110" />
-              <span className="text-sm font-medium">{link.label}</span>
+              <div className="flex flex-col items-center">
+                <link.icon className="w-8 h-8 text-blue-600 mb-3 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-semibold text-blue-900">
+                  {link.label}
+                </span>
+              </div>
             </motion.a>
           ))}
-        </motion.div>
-
-        {/* Feature Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.2 }}
-              className="bg-gradient-to-br from-blue-900/50 to-purple-900/30 p-6 rounded-2xl backdrop-blur-lg border border-white/10"
-            >
-              <feature.icon className="w-12 h-12 mb-4 mx-auto text-blue-400" />
-              <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-              <p className="text-blue-200">{feature.description}</p>
-            </motion.div>
-          ))}
         </div>
-
-        {/* CTA Section */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="inline-block"
-        >
-          <Link
-            to="/generator"
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-lg font-bold text-white hover:shadow-2xl transition-all group"
-          >
-            <Rocket className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-            Launch Enterprise Dashboard
-          </Link>
-        </motion.div>
-      </motion.div>
-
-      {/* Animated Background Element */}
-      <motion.div 
-        className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
-        animate={{
-          scale: [1, 1.2, 1],
-          rotate: [0, 180, 360]
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      />
+      </div>
     </div>
   );
 };
