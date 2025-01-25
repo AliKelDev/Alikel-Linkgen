@@ -35,9 +35,11 @@ const RoleContext = createContext({
   currentRole: 'sales',
   updateRole: (newRole) => {}
 });
-🛠 Technical Architecture
-mermaid
-Copy
+```
+
+## 🛠 Technical Architecture
+
+```mermaid
 graph TD
     A[User Input] --> B(Domain Validator)
     B --> C{Valid TLD?}
@@ -46,14 +48,19 @@ graph TD
     D --> F[(Search History)]
     E --> F
     F --> G[Export Engine]
-🚧 Future Roadmap
-Q4 2024: Sector Expansion
-Sector	Status	Target Features
-Finance	Planned	Banking TLDs, Compliance Filters
-Healthcare	Research	Medical Domains, HIPAA Patterns
-Web3	Prototype	.crypto, .dao, Blockchain Filters
-js
-Copy
+```
+
+## 🚧 Future Roadmap
+
+### Q4 2024: Sector Expansion
+
+| Sector | Status | Target Features |
+|--------|--------|----------------|
+| Finance | Planned | Banking TLDs, Compliance Filters |
+| Healthcare | Research | Medical Domains, HIPAA Patterns |
+| Web3 | Prototype | .crypto, .dao, Blockchain Filters |
+
+```js
 // Planned sector configuration
 const FINANCE_CONFIG = {
   domains: ['.finance', '.bank', '.invest'],
@@ -62,9 +69,11 @@ const FINANCE_CONFIG = {
     exclude: ['Engineering', 'IT']
   }
 };
-🛠️ Development Setup
-bash
-Copy
+```
+
+## 🛠️ Development Setup
+
+```bash
 # Clone with depth
 git clone --depth=1 https://github.com/AliKelDev/LinkForge.git
 
@@ -73,9 +82,12 @@ yarn fortress  # alias for: yarn install --frozen-lockfile
 
 # Launch dev server
 yarn ignite
-🌍 Connect
-Technical Blog
-Twitter/X
+```
+
+## 🌍 Connect
+
+[![Technical Blog](https://img.shields.io/badge/Technical_Blog-2962FF?style=for-the-badge&logo=hashnode&logoColor=white)](https://aliceleiserblog.netlify.app/)
+[![X (Twitter)](https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white)](https://twitter.com/AliLeisR)
 
 "Great tools are never finished - only iterated" - @AliKelDev
 
