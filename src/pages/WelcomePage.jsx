@@ -46,35 +46,30 @@ const WelcomePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-      {/* Hero Section - Fixed overlapping issue here */}
+    <div className="min-h-screen">
+      {/* Hero Section */}
       <div className="relative overflow-hidden">
-        {/* Added pointer-events-none to background */}
-        <div className="absolute inset-0 bg-blue-600 opacity-5 pattern-grid pointer-events-none"></div>
-        
-        {/* Added z-index to content container */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-28 relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-blue-900 mb-6">
+            <h1 className="text-5xl md:text-6xl font-bold text-blue-100 mb-6">
               LinkForge Pro
             </h1>
-            <p className="text-xl md:text-2xl text-blue-700 mb-6 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-blue-200 mb-6 max-w-2xl mx-auto">
               Supercharge your LinkedIn outreach with enterprise-grade search automation
             </p>
-            <p className="text-md text-blue-600 mb-12 max-w-2xl mx-auto">
+            <p className="text-md text-blue-300 mb-12 max-w-2xl mx-auto">
               *Requires LinkedIn Sales Navigator license to access generated links
             </p>
             
-            {/* Working CTA Button */}
             <div className="flex justify-center">
               <motion.div whileHover={{ scale: 1.05 }} className="inline-block">
                 <Link
                   to="/generator"
-                  className="bg-blue-600 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg"
+                  className="bg-blue-600/90 text-white px-8 py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg backdrop-blur-sm"
                 >
                   <Rocket className="w-5 h-5" />
                   Start Generating URLs
@@ -94,15 +89,15 @@ const WelcomePage = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.2 }}
-              className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300"
+              className="bg-white/90 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 backdrop-blur-sm"
             >
-              <div className="bg-blue-50 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+              <div className="bg-blue-50/50 w-16 h-16 rounded-xl flex items-center justify-center mb-6">
                 <feature.icon className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-bold text-blue-900 mb-4">
                 {feature.title}
               </h3>
-              <p className="text-blue-600 leading-relaxed">
+              <p className="text-blue-700 leading-relaxed">
                 {feature.description}
               </p>
             </motion.div>
@@ -118,10 +113,10 @@ const WelcomePage = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            <h2 className="text-2xl font-bold text-blue-900 mb-4">
+            <h2 className="text-2xl font-bold text-blue-100 mb-4">
               Built by AliKelDev
             </h2>
-            <p className="text-lg text-blue-600 mb-8">
+            <p className="text-lg text-blue-200 mb-8">
               Co-founder of Pixelle3
             </p>
           </motion.div>
@@ -138,7 +133,7 @@ const WelcomePage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 + index * 0.1 }}
-              className="group bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              className="group bg-white/90 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
               whileHover={{ y: -4 }}
             >
               <div className="flex flex-col items-center">

@@ -21,7 +21,7 @@ const AnimatedBackground = () => {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-blue-900/95 to-blue-950">
-      {/* Subtle gradient orbs */}
+      {/* Animated gradient blob */}
       <div 
         className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-blue-400/10 rounded-full blur-[100px] opacity-30"
         style={{
@@ -33,8 +33,8 @@ const AnimatedBackground = () => {
         }}
       />
       
-      {/* Geometric grid pattern */}
-      <div className="absolute inset-0 opacity-10">
+      {/* Dynamic grid pattern */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="grid grid-cols-12 gap-2 h-full">
           {[...Array(144)].map((_, i) => (
             <div
@@ -48,8 +48,8 @@ const AnimatedBackground = () => {
         </div>
       </div>
 
-      {/* Dynamic grid lines */}
-      <svg className="absolute inset-0 w-full h-full opacity-15">
+      {/* Geometric grid lines */}
+      <svg className="absolute inset-0 w-full h-full opacity-15 pointer-events-none">
         <pattern
           id="grid"
           width="60"
@@ -66,7 +66,7 @@ const AnimatedBackground = () => {
         <rect width="100%" height="100%" fill="url(#grid)" />
       </svg>
 
-      {/* Main content */}
+      {/* Main content container */}
       <div className="relative z-10">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<WelcomePage />} />

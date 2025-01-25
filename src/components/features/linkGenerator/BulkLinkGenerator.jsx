@@ -21,7 +21,6 @@ const BulkLinkGenerator = () => {
   const [generatedLinks, setGeneratedLinks] = useState([]);
   const [searchHistory, setSearchHistory] = useState([]);
   const { currentRole, roleConfig } = useRole();
-  // Add state for bucket selector visibility
   const [showBucketSelector, setShowBucketSelector] = useState(true);
 
   useEffect(() => {
@@ -31,7 +30,6 @@ const BulkLinkGenerator = () => {
     }
   }, [currentRole]);
 
-  // Toggle function for bucket selector
   const toggleBucketSelector = () => {
     setShowBucketSelector(!showBucketSelector);
   };
@@ -83,17 +81,16 @@ const BulkLinkGenerator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4">
+    <div className="min-h-screen py-12 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-blue-900 mb-2">
+          <h1 className="text-4xl font-bold text-blue-100 mb-2">
             {roleConfig.title} Link Generator
           </h1>
-          <p className="text-lg text-blue-600">{roleConfig.description}</p>
-          {/* Add Bucket Selector Toggle Button */}
+          <p className="text-lg text-blue-200">{roleConfig.description}</p>
           <button
             onClick={toggleBucketSelector}
-            className="mt-4 px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors shadow-sm"
+            className="mt-4 px-4 py-2 bg-blue-600/80 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm backdrop-blur-sm"
           >
             {showBucketSelector ? 'Hide Bucket Selector' : 'Show Bucket Selector'}
           </button>
@@ -101,7 +98,7 @@ const BulkLinkGenerator = () => {
 
         <RoleSelector />
 
-        <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm backdrop-filter">
+        <div className="bg-white/80 rounded-2xl shadow-xl p-8 backdrop-blur-lg">
           <CompanyInput onSubmit={handleGenerateLinks} />
 
           <AnimatePresence mode="wait">
@@ -123,7 +120,6 @@ const BulkLinkGenerator = () => {
                           prev.map(link => link.id === updatedLink.id ? updatedLink : link)
                         );
                       }}
-                      // Pass the showBucketSelector state as prop
                       showBucketSelector={showBucketSelector}
                     />
                   ))}
