@@ -1,5 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="16" fill="#4F46E5"/>
-  <path d="M16 8v16M8 16h16" stroke="white" stroke-width="3" stroke-linecap="round"/>
-  <path d="M12 12l8 8M20 12l-8 8" stroke="white" stroke-width="3" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" class="linkforge-logo">
+  <!-- Shield Base -->
+  <path 
+    d="M100 20L20 50V150L100 180L180 150V50L100 20Z" 
+    fill="url(#linkedin-gradient)" 
+    stroke="#004182" 
+    stroke-width="4"
+    stroke-linejoin="round"
+  />
+  
+  <!-- Dominant "LF" Text -->
+  <text 
+    x="50%" 
+    y="58%" 
+    dominant-baseline="middle" 
+    text-anchor="middle" 
+    font-family="Arial, sans-serif" 
+    font-weight="bold" 
+    font-size="80" 
+    fill="#FFFFFF"
+    letter-spacing="-4"
+  >
+    LF
+  </text>
+  
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="linkedin-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0077B5"/>
+      <stop offset="100%" stop-color="#004182"/>
+    </linearGradient>
+  </defs>
 </svg>
