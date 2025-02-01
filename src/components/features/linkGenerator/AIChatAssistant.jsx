@@ -128,7 +128,7 @@ const AIChatAssistant = ({ company, domain, companies }) => {
             }]);
         }
         setIsLoading(false);
-        setCurrentMessage('');
+         setCurrentMessage(''); // Clear the input here
     };
 
 
