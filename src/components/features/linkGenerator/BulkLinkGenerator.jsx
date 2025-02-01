@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CompanyInput from './CompanyInput';
 import GeneratedLinkCard from './GeneratedLinkCard';
@@ -8,6 +8,8 @@ import { useRole } from '../../../contexts/RoleContext';
 import { generateLinks as generateSalesLinks } from '../../../utils/linkUtils/sales';
 import { generateLinks as generateRecruiterLinks } from '../../../utils/linkUtils/recruiter';
 import { generateLinks as generateJobSeekerLinks } from '../../../utils/linkUtils/jobseeker';
+import { useLocation } from 'react-router-dom';
+
 
 const PRIORITY_DOMAINS = ['.com', '.fr', '.es', '.it'];
 const SECONDARY_DOMAINS = [
@@ -17,35 +19,40 @@ const SECONDARY_DOMAINS = [
   '.za', '.eg', '.ma', '.ng', '.ke', '.tz', '.io', '.ai', '.tech', '.co'
 ];
 
-const BulkLinkGenerator = () => {
-  const [generatedLinks, setGeneratedLinks] = useState([]);
-  const [searchHistory, setSearchHistory] = useState([]);
-  const { currentRole, roleConfig } = useRole();
-  const [showBucketSelector, setShowBucketSelector] = useState(true);
+const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
+    const [generatedLinks, setGeneratedLinks] = useState([]);
+    const [searchHistory, setSearchHistory] = useState([]);
+    const { currentRole, roleConfig } = useRole();
+    const [showBucketSelector, setShowBucketSelector] = useState(true);
+    const scrollRef = useRef(null);
+    const location = useLocation();
 
-  useEffect(() => {
-    const savedHistory = localStorage.getItem(`searchHistory_${currentRole}`);
-    if (savedHistory) {
-      setSearchHistory(JSON.parse(savedHistory));
-    }
-  }, [currentRole]);
 
-  const toggleBucketSelector = () => {
-    setShowBucketSelector(!showBucketSelector);
-  };
 
-  const getRoleSpecificLinks = (company, domain) => {
-    switch (currentRole) {
-      case 'sales':
-        return generateSalesLinks(company, domain);
-      case 'recruiter':
-        return generateRecruiterLinks(company, domain);
-      case 'jobseeker':
-        return generateJobSeekerLinks(company, domain);
-      default:
-        return generateSalesLinks(company, domain);
-    }
-  };
+    useEffect(() => {
+        const savedHistory = localStorage.getItem(`searchHistory_${currentRole}`);
+        if (savedHistory) {
+            setSearchHistory(JSON.parse(savedHistory));
+        }
+    }, [currentRole]);
+
+
+    const toggleBucketSelector = () => {
+        setShowBucketSelector(!showBucketSelector);
+    };
+
+    const getRoleSpecificLinks = (company, domain) => {
+        switch (currentRole) {
+            case 'sales':
+                return generateSalesLinks(company, domain);
+            case 'recruiter':
+                return generateRecruiterLinks(company, domain);
+            case 'jobseeker':
+                return generateJobSeekerLinks(company, domain);
+            default:
+                return generateSalesLinks(company, domain);
+        }
+    };
 
   const handleGenerateLinks = (companies) => {
     const newLinks = companies.map((company) => ({
@@ -59,10 +66,25 @@ const BulkLinkGenerator = () => {
     }));
 
     setGeneratedLinks(newLinks);
-    saveToHistory(companies);
+    saveToHistory(companies, newLinks);
+    if (updateMetrics) {
+      updateMetrics();
+    }
+
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    // Example of how to add a notification
+    setNotifications(prev => [
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        message: `Generated links for ${companies.length} company${companies.length > 1 ? 's' : ''}.`,
+        read: false,
+      }]);
   };
 
-  const saveToHistory = (companies) => {
+  const saveToHistory = (companies, newLinks) => {
     const timestamp = new Date().toISOString();
     const newSearches = companies.map((company) => ({
       id: Date.now() + Math.random(),
@@ -70,77 +92,85 @@ const BulkLinkGenerator = () => {
       timestamp,
       role: currentRole
     }));
-
     const combinedHistory = [...newSearches, ...searchHistory];
-    const uniqueHistory = Array.from(
-      new Map(combinedHistory.map((item) => [item.company, item])).values()
-    ).slice(0, 50);
-
+      const uniqueHistory = Array.from(
+          new Map(combinedHistory.map((item) => [item.company, item])).values()
+      ).slice(0, 50);
     setSearchHistory(uniqueHistory);
     localStorage.setItem(`searchHistory_${currentRole}`, JSON.stringify(uniqueHistory));
+     // Save links
+      const storedLinks = localStorage.getItem(`generatedLinks_${currentRole}`)
+      const links = storedLinks ? JSON.parse(storedLinks) : []
+      localStorage.setItem(`generatedLinks_${currentRole}`, JSON.stringify([...links, ...newLinks]));
   };
 
-  return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-blue-100 mb-2">
-            {roleConfig.title} Link Generator
-          </h1>
-          <p className="text-lg text-blue-200">{roleConfig.description}</p>
-          <button
-            onClick={toggleBucketSelector}
-            className="mt-4 px-4 py-2 bg-blue-600/80 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm backdrop-blur-sm"
-          >
-            {showBucketSelector ? 'Hide Bucket Selector' : 'Show Bucket Selector'}
-          </button>
-        </div>
+    return (
+        <div className="min-h-screen py-12 px-4">
+            <div className="max-w-5xl mx-auto">
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-blue-100 mb-2">
+                        {roleConfig.title} Link Generator
+                    </h1>
+                    <p className="text-lg text-blue-200">{roleConfig.description}</p>
+                    <button
+                        onClick={toggleBucketSelector}
+                        className="mt-4 px-4 py-2 bg-blue-600/80 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm backdrop-blur-sm"
+                    >
+                        {showBucketSelector ? 'Hide Bucket Selector' : 'Show Bucket Selector'}
+                    </button>
+                </div>
 
-        <RoleSelector />
+                <RoleSelector />
 
-        <div className="bg-white/80 rounded-2xl shadow-xl p-8 backdrop-blur-lg">
-          <CompanyInput onSubmit={handleGenerateLinks} />
+                <div className="bg-white/80 rounded-2xl shadow-xl p-8 backdrop-blur-lg">
+                    <CompanyInput onSubmit={handleGenerateLinks} />
+                    <div ref={scrollRef}>
+                    <AnimatePresence mode="wait">
+                            {generatedLinks.length > 0 && (
+                                <motion.div
+                                    className="mt-12 space-y-8"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                >
+                                    {generatedLinks
+                                        .filter(linkData => linkData.role === currentRole)
+                                        .map((linkData) => (
+                                            <GeneratedLinkCard
+                                                key={linkData.id}
+                                                linkData={linkData}
+                                                onUpdateLink={(updatedLink) => {
+                                                    setGeneratedLinks(prev =>
+                                                        prev.map(link => link.id === updatedLink.id ? updatedLink : link)
+                                                    );
+                                                }}
+                                                showBucketSelector={showBucketSelector}
+                                            />
+                                        ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
-          <AnimatePresence mode="wait">
-            {generatedLinks.length > 0 && (
-              <motion.div 
-                className="mt-12 space-y-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                {generatedLinks
-                  .filter(linkData => linkData.role === currentRole)
-                  .map((linkData) => (
-                    <GeneratedLinkCard 
-                      key={linkData.id} 
-                      linkData={linkData}
-                      onUpdateLink={(updatedLink) => {
-                        setGeneratedLinks(prev => 
-                          prev.map(link => link.id === updatedLink.id ? updatedLink : link)
-                        );
-                      }}
-                      showBucketSelector={showBucketSelector}
+
+                    <SearchHistorySection
+                        searchHistory={searchHistory}
+                        onClearHistory={() => {
+                            setSearchHistory([]);
+                            localStorage.removeItem(`searchHistory_${currentRole}`);
+                            localStorage.removeItem(`generatedLinks_${currentRole}`);
+                            if (updateMetrics) {
+                                updateMetrics()
+                            }
+                        }}
+                        onSearchAgain={(company) => {
+                            handleGenerateLinks([company]);
+                        }}
                     />
-                  ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <SearchHistorySection
-            searchHistory={searchHistory}
-            onClearHistory={() => {
-              setSearchHistory([]);
-              localStorage.removeItem(`searchHistory_${currentRole}`);
-            }}
-            onSearchAgain={(company) => {
-              handleGenerateLinks([company]);
-            }}
-          />
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default BulkLinkGenerator;

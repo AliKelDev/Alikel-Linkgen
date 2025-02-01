@@ -1,3 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Dashboard Layout */
+.dashboard-container {
+    @apply min-h-screen flex;
+  }
+  
+  .dashboard-sidebar {
+    @apply fixed inset-y-0 z-30 bg-gradient-to-b from-gray-900 to-gray-800 transition-all duration-300;
+  }
+  
+  .dashboard-main {
+    @apply flex-1 transition-all duration-300;
+  }
+  
+  .dashboard-header {
+    @apply h-16 border-b flex items-center justify-between px-6 bg-white;
+  }
+  
+  .content-wrapper {
+    @apply p-6 max-w-7xl mx-auto w-full;
+  }
+  
+  /* Metrics Grid */
+  .metrics-grid {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
+  }
+  
+  /* Generator Card */
+  .generator-card {
+    @apply bg-white rounded-2xl shadow-xl p-6;
+  }
+  
+  /* Activity Feed */
+  .activity-feed {
+    @apply bg-white rounded-2xl shadow-xl p-6 h-fit lg:sticky lg:top-6;
+  }
+  

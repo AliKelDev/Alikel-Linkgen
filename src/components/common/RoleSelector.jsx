@@ -3,7 +3,7 @@ import { useRole, ROLES } from '../../contexts/RoleContext';
 import { motion } from 'framer-motion';
 import { Users, UserSearch, Briefcase } from 'lucide-react';
 
-const RoleSelector = () => {
+const RoleSelector = ({ variant = 'horizontal', isCollapsed = false }) => {
   const { currentRole, updateRole, availableRoles } = useRole();
 
   const roleIcons = {
@@ -12,6 +12,50 @@ const RoleSelector = () => {
     [ROLES.JOBSEEKER]: Briefcase,
   };
 
+  // Vertical variant styling
+  if (variant === 'vertical') {
+    return (
+      <div className="space-y-2 w-full">
+        {availableRoles.map(({ id, title, description }) => {
+          const Icon = roleIcons[id] || Users;
+          const isActive = currentRole === id;
+          
+          return (
+            <motion.button
+              key={id}
+              onClick={() => updateRole(id)}
+              className={`relative w-full p-3 rounded-lg flex items-center gap-3 transition-colors
+                ${isActive 
+                  ? 'bg-blue-50 text-blue-600 font-semibold' 
+                  : 'text-gray-600 hover:bg-gray-100'}
+                group`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="activeIndicator"
+                  className="absolute left-0 inset-y-0 w-1 bg-blue-500 rounded-r-lg"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
+              )}
+              
+              <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+              {!isCollapsed && (
+                <div className="text-left">
+                  <span className="block text-sm">{title}</span>
+                  <span className="block text-xs text-gray-500 font-normal">{description}</span>
+                </div>
+              )}
+            </motion.button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Horizontal layout
   return (
     <div className="w-full max-w-2xl mx-auto mb-8">
       <div className="bg-white rounded-xl shadow-sm p-2">
