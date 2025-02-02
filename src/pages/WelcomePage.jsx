@@ -103,7 +103,7 @@ const WelcomePage = () => {
               Built by <a href="https://github.com/AliKelDev" target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:text-blue-800 underline">AliKelDev</a>
             </h2>
             <p className="text-lg text-blue-600 mb-8">
-              Technical Solutions Architect at <a href="https://webpixelle3.netlify.app/" className="text-blue-700 hover:text-blue-800 underline">Pixelle3</a> | 
+              Business professional / Founder at <a href="https://webpixelle3.netlify.app/" className="text-blue-700 hover:text-blue-800 underline">Pixelle3</a> | 
               Crafting High-Performance Automation Solutions
             </p>
           </div>

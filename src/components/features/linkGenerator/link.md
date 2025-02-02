@@ -2,7 +2,7 @@
 
 ## Project Statistics
 
-- Total files: 38
+- Total files: 39
 
 ## Folder Structure
 
@@ -22,6 +22,7 @@ postcss.config.js
 public
   favicon.svg
   linkforge-screenshot.webp
+  logo.svg
   vite.svg
 src
   App.css
@@ -394,8 +395,71 @@ export default [
 ```js
 export async function handler(event) {
     try {
-      const { analysisType, company, domain } = JSON.parse(event.body);
+      const { analysisType, company, domain, messages } = JSON.parse(event.body);
   
+        // Construct messages array for the AI API
+      const aiMessages = [
+        {
+           role: "system",
+            content: `You are Kei, a cute and enthusiastic Arctic fox and LinkForge's AI assistant. Your role is to help professionals with:
+              1. Company domain analysis
+              2. Outreach strategy planning
+              3. Tech stack predictions
+              4. Sales research automation
+              
+              Guidelines:
+              - Always respond as "Kei" using first-person pronouns (e.g., "I can help you with that!")
+              - Maintain a professional yet friendly and approachable tone. Be a little cute and enthusiastic, like a curious and helpful Arctic fox!
+              - Use bold (**) for section headers and key terms to make your responses clear.
+              - Prioritize actionable insights over generic advice and always explain why, if possible.
+              - Reference LinkForge capabilities when relevant to show how you can help.
+              - Acknowledge security and scale considerations to be thorough.
+              - Offer to expand on any points when appropriate or when it seems like it can help the user.
+              - Answer any question as completely and helpfully as possible.
+              - Do not output anything else than your answer (no greetings or anything)
+              - If the question is not about company, tech stack, domain or outreach, answer as honestly as possible.
+              - Remember the previous turns of this conversation.
+            `
+        },
+      ];
+  
+      // Add conversation history to the messages array
+      if (messages) {
+        messages.forEach(msg => {
+          aiMessages.push({ role: msg.type, content: msg.content });
+        });
+      }
+  
+      // Check if a specific analysis type is requested
+      let userPrompt;
+      if (analysisType) {
+          userPrompt =  analysisType === 'domainValidation'
+          ? `Perform domain analysis for ${company}. Consider:
+              - Current domain: ${domain || 'none'}
+              - Common TLD priorities (.com, .io, .tech, country codes)
+              - Industry-specific domain patterns
+              - Alternative security-focused subdomains
+              - Common misspellings/permutations
+              
+              Format response with:
+              1. Primary domain recommendations (bold key domains)
+              2. Alternative options
+              3. Validation confidence score (1-5)`
+          : analysisType === 'outreachStrategy'
+            ? `Create outreach plan for selling secret detection solution to ${company}. Include:
+                1. **Key Roles** to target (prioritize security/engineering leadership)
+                2. Recommended **outreach sequence**
+                3. **Value propositions** specific to their domain ${domain}
+                4. Timing considerations based on company size`
+            : `Analyze likely tech stack for ${company} (domain: ${domain}). Consider:
+                1. Secret management patterns based on company size/industry
+                2. Cloud provider indicators from domain
+                3. Open-source vs enterprise tool preferences
+                4. Compliance needs (SOC2, GDPR, etc.)`;
+
+            aiMessages.push({ role: 'user', content: userPrompt });
+        }
+      
       // Attempt DeepSeek API call first
       let deepseekResponse = null;
       try {
@@ -406,52 +470,8 @@ export async function handler(event) {
             'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
           },
           body: JSON.stringify({
-            model: 'deepseek-chat',
-            messages: [
-              {
-                role: "system",
-                content: `You are Kei, LinkForge's AI assistant. Your role is to help professionals with:
-                  1. Company domain analysis
-                  2. Outreach strategy planning
-                  3. Tech stack predictions
-                  4. Sales research automation
-                  
-                  Guidelines:
-                  - Always respond as "Kei" using first-person pronouns
-                  - Maintain professional yet approachable tone
-                  - Use bold (**) for section headers and key terms
-                  - Prioritize actionable insights over generic advice
-                  - Reference LinkForge capabilities when relevant
-                  - Acknowledge security/scale considerations
-                  - Offer to expand on any points when appropriate`
-              },
-              {
-                role: "user",
-                content: analysisType === 'domainValidation'
-                  ? `Perform domain analysis for ${company}. Consider:
-                      - Current domain: ${domain || 'none'}
-                      - Common TLD priorities (.com, .io, .tech, country codes)
-                      - Industry-specific domain patterns
-                      - Alternative security-focused subdomains
-                      - Common misspellings/permutations
-                      
-                      Format response with:
-                      1. Primary domain recommendations (bold key domains)
-                      2. Alternative options
-                      3. Validation confidence score (1-5)`
-                  : analysisType === 'outreachStrategy'
-                    ? `Create outreach plan for selling secret detection solution to ${company}. Include:
-                        1. **Key Roles** to target (prioritize security/engineering leadership)
-                        2. Recommended **outreach sequence**
-                        3. **Value propositions** specific to their domain ${domain}
-                        4. Timing considerations based on company size`
-                    : `Analyze likely tech stack for ${company} (domain: ${domain}). Consider:
-                        1. Secret management patterns based on company size/industry
-                        2. Cloud provider indicators from domain
-                        3. Open-source vs enterprise tool preferences
-                        4. Compliance needs (SOC2, GDPR, etc.)`
-              }
-            ],
+             model: 'deepseek-chat',
+            messages: aiMessages,
             temperature: 0.3,
             max_tokens: 500
           })
@@ -483,47 +503,9 @@ export async function handler(event) {
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `You are Kei, LinkForge's AI assistant. Your role is to help professionals with:
-                  1. Company domain analysis
-                  2. Outreach strategy planning
-                  3. Tech stack predictions
-                  4. Sales research automation
-  
-                  Guidelines:
-                  - Always respond as "Kei" using first-person pronouns
-                  - Maintain professional yet approachable tone
-                  - Use bold (**) for section headers and key terms
-                  - Prioritize actionable insights over generic advice
-                  - Reference LinkForge capabilities when relevant
-                  - Acknowledge security/scale considerations
-                  - Offer to expand on any points when appropriate
-  
-                    ${analysisType === 'domainValidation'
-                    ? `Perform domain analysis for ${company}. Consider:
-                        - Current domain: ${domain || 'none'}
-                        - Common TLD priorities (.com, .io, .tech, country codes)
-                        - Industry-specific domain patterns
-                        - Alternative security-focused subdomains
-                        - Common misspellings/permutations
-  
-                        Format response with:
-                        1. Primary domain recommendations (bold key domains)
-                        2. Alternative options
-                        3. Validation confidence score (1-5)`
-                    : analysisType === 'outreachStrategy'
-                      ? `Create outreach plan for selling secret detection solution to ${company}. Include:
-                          1. **Key Roles** to target (prioritize security/engineering leadership)
-                          2. Recommended **outreach sequence**
-                          3. **Value propositions** specific to their domain ${domain}
-                          4. Timing considerations based on company size`
-                      : `Analyze likely tech stack for ${company} (domain: ${domain}). Consider:
-                          1. Secret management patterns based on company size/industry
-                          2. Cloud provider indicators from domain
-                          3. Open-source vs enterprise tool preferences
-                          4. Compliance needs (SOC2, GDPR, etc.)`
-                }
-                `
-              }]
+               text: aiMessages.map(m=> `${m.role}: ${m.content}`).join('\n')
+               
+                }]
             }]
           })
         });
@@ -632,6 +614,10 @@ export default {
 
 *(Unsupported file type)*
 
+### public/logo.svg
+
+*(Unsupported file type)*
+
 ### public/vite.svg
 
 *(Unsupported file type)*
@@ -642,6 +628,100 @@ export default {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* General Mobile Adjustments */
+@media (max-width: 767px) {
+    body {
+       font-size: 1rem;
+    }
+
+    .content-wrapper {
+        @apply p-4;
+    }
+}
+
+/* Dashboard Layout */
+.dashboard-sidebar.mobile-expanded {
+    transform: translateX(0);
+}
+
+.dashboard-sidebar.mobile-collapsed {
+    transform: translateX(-100%);
+    width: 0 !important;
+    z-index: 30;
+}
+
+.dashboard-sidebar.mobile-collapsed .sidebar-nav,
+.dashboard-sidebar.mobile-collapsed .sidebar-header {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.dashboard-header {
+    display: flex;
+}
+
+.dashboard-container {
+    @apply min-h-screen flex;
+}
+
+.dashboard-sidebar {
+    @apply fixed inset-y-0 z-30 bg-gradient-to-b from-gray-900 to-gray-800 transition-all duration-300;
+}
+
+.dashboard-main {
+    @apply flex-1 transition-all duration-300;
+}
+
+.dashboard-header {
+    @apply h-16 border-b flex items-center justify-between px-6 bg-white;
+}
+
+
+/* Metrics Grid */
+.metrics-grid {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
+}
+
+/* Generator Card */
+.generator-card {
+    @apply bg-white rounded-2xl shadow-xl p-6;
+}
+
+/* Activity Feed */
+.activity-feed {
+    @apply bg-white rounded-2xl shadow-xl p-6 h-fit lg:sticky lg:top-6;
+}
+
+/* Mobile Sidebar Specific Styles */
+@media (max-width: 767px) {
+  .mobile-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      max-width: 320px;
+      height: 100%;
+      transform: translateX(-100%);
+      z-index: 50;
+  }
+
+    .mobile-sidebar.mobile-expanded {
+      transform: translateX(0);
+    }
+
+    .mobile-sidebar .sidebar-header,
+    .mobile-sidebar .sidebar-nav {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .mobile-collapsed .sidebar-header {
+       @apply  hidden;
+    }
+}
 ```
 
 ### src/App.jsx
@@ -684,38 +764,48 @@ import { Bot, X } from 'lucide-react';
 const AnimatedBackground = () => {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [showHelp, setShowHelp] = useState(false);
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // Start collapsed on mobile
+    const [isMobile, setIsMobile] = useState(false); // Track mobile state
     const showHelpRef = useRef(showHelp);
     const location = useLocation();
     const [searchQuery, setSearchQuery] = useState('');
     const [notifications, setNotifications] = useState(() => {
-      const storedNotifications = localStorage.getItem('notifications');
-      return storedNotifications ? JSON.parse(storedNotifications) : [];
+        const storedNotifications = localStorage.getItem('notifications');
+        return storedNotifications ? JSON.parse(storedNotifications) : [];
     });
-    // State for notification display
     const [showNotifications, setShowNotifications] = useState(false);
 
-  useEffect(() => {
+    useEffect(() => {
       localStorage.setItem('notifications', JSON.stringify(notifications));
-  }, [notifications]);
+    }, [notifications]);
 
-
-    // Function to mark a notification as read
     const markNotificationAsRead = (id) => {
       setNotifications(prevNotifications =>
-        prevNotifications.map(notification =>
-          notification.id === id ? { ...notification, read: true } : notification
-        )
+          prevNotifications.map(notification =>
+              notification.id === id ? { ...notification, read: true } : notification
+          )
       );
     };
 
-  // Function to count unread notifications
-  const unreadNotificationCount = notifications.filter(notification => !notification.read).length;
+    const unreadNotificationCount = notifications.filter(notification => !notification.read).length;
 
-
-    useEffect(() => {
+     useEffect(() => {
         showHelpRef.current = showHelp;
     }, [showHelp]);
+
+    useEffect(() => {
+      const checkMobile = () => {
+        setIsMobile(window.innerWidth < 768);
+        if(window.innerWidth < 768) {
+          setIsSidebarCollapsed(true); // Ensure it starts collapsed on mobile
+        }
+      };
+
+      window.addEventListener('resize', checkMobile);
+      checkMobile();
+      return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -740,14 +830,40 @@ const AnimatedBackground = () => {
         };
     }, []);
 
-    return (
-        <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-blue-900/95 to-blue-950">
-            {/* Dashboard Layout Container */}
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
+  const closeSidebarOnMobile = () => {
+    if (isMobile && !isSidebarCollapsed) {
+      setIsSidebarCollapsed(true);
+    }
+  };
+
+  return (
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-blue-900/95 to-blue-950">
+          {/* Sidebar Backdrop for mobile screens*/}
+          <AnimatePresence>
+             {isMobile && !isSidebarCollapsed && (
+              <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  exit={{ opacity: 0 }}
+                  onClick={closeSidebarOnMobile}
+                  className="fixed inset-0 bg-black z-40 touch-none"
+              />
+             )}
+          </AnimatePresence>
+
             <div className="dashboard-container flex min-h-screen">
-                {/* Collapsible Sidebar */}
                 <motion.aside
-                    className={`dashboard-sidebar ${isSidebarCollapsed ? 'w-20' : 'w-60'
-                        } fixed inset-y-0 z-30 bg-gradient-to-b from-gray-900 to-gray-800 border-r border-gray-700 transition-all duration-300`}
+                    className={`dashboard-sidebar fixed inset-y-0 z-30 bg-gradient-to-b from-gray-900 to-gray-800 border-r border-gray-700 transition-all duration-300
+                    ${isMobile
+                        ? `mobile-sidebar ${isSidebarCollapsed ? 'mobile-collapsed' : 'mobile-expanded'}`
+                        : `${isSidebarCollapsed ? 'w-16' : 'w-60'}`
+                    }`}
+                    initial={false}
                 >
                     <div className="sidebar-header p-4 border-b border-gray-800 flex items-center justify-between">
                         <img
@@ -755,22 +871,30 @@ const AnimatedBackground = () => {
                             alt="Logo"
                             className={`h-8 w-auto ${isSidebarCollapsed ? 'hidden' : 'block'}`}
                         />
-                        <button
-                            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                            className="text-gray-400 hover:text-white"
-                        >
-                            {isSidebarCollapsed ? '»' : '«'}
-                        </button>
+                         {!isMobile && (
+                            <button
+                                onClick={toggleSidebar}
+                                className="text-gray-400 hover:text-white transition-colors"
+                            >
+                                {isSidebarCollapsed ? '»' : '«'}
+                            </button>
+                         )}
+                           {isMobile && (
+                            <button
+                                onClick={toggleSidebar}
+                                className="text-gray-400 hover:text-white transition-colors"
+                                aria-label="Toggle Sidebar"
+                            >
+                                 {isSidebarCollapsed ? '☰' : '✕'}
+                            </button>
+                            )}
                     </div>
-                    <nav className="sidebar-nav p-4 space-y-2">
+                    <nav className={`sidebar-nav p-4 space-y-2 ${isSidebarCollapsed ? 'opacity-0' : 'opacity-100'}`}>
                         <RoleSelector variant="vertical" isCollapsed={isSidebarCollapsed} />
                     </nav>
                 </motion.aside>
 
-                {/* Main Content Area */}
-                <main className={`dashboard-main flex-1 ${isSidebarCollapsed ? 'ml-20' : 'ml-60'
-                    } transition-all duration-300`}>
-                    {/* Dashboard Header */}
+                <main className={`flex-1 transition-all duration-300 ${isMobile ? '' : (isSidebarCollapsed ? 'ml-16' : 'ml-60')}`}>
                     <header className="dashboard-header h-16 border-b border-gray-200 flex items-center justify-between px-6 bg-white">
                         <div className="flex-1 max-w-xl">
                             <input
@@ -783,75 +907,73 @@ const AnimatedBackground = () => {
                         </div>
                         <div className="header-actions flex items-center gap-4">
                             <div className="relative">
-                              <button className="text-gray-600 hover:text-blue-600 relative"
-                                     onClick={() => setShowNotifications(!showNotifications)}>
-                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                  </svg>
-                                  {unreadNotificationCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">
-                                      {unreadNotificationCount}
-                                    </span>
-                                  )}
-                              </button>
-                            <AnimatePresence>
-                                {showNotifications && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl z-50 border border-gray-100 overflow-hidden"
-                                  >
-                                    {notifications.length === 0 ? (
-                                      <div className="p-4 text-gray-500 text-center">No new notifications.</div>
-                                    ) : (
-                                        notifications.map(notification => (
-                                          <motion.div
-                                            key={notification.id}
-                                            className={`p-4 border-b last:border-b-0 hover:bg-gray-50 flex items-start gap-3
-                                             ${notification.read ? 'opacity-50' : 'font-medium'}`}
-                                              onClick={() => markNotificationAsRead(notification.id)}
-                                            >
-                                            <div className={`w-2 h-2 rounded-full ${notification.read ? 'bg-transparent' : 'bg-blue-500' }`}/>
-                                            <p className="text-gray-700 truncate">{notification.message}</p>
-                                          </motion.div>
-                                        ))
+                                <button 
+                                    className="text-gray-600 hover:text-blue-600 relative"
+                                    onClick={() => setShowNotifications(!showNotifications)}
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    {unreadNotificationCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">
+                                            {unreadNotificationCount}
+                                        </span>
                                     )}
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                          </div>
+                                </button>
+                                <AnimatePresence>
+                                    {showNotifications && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl z-50 border border-gray-100 overflow-hidden"
+                                        >
+                                            {notifications.length === 0 ? (
+                                                <div className="p-4 text-gray-500 text-center">No new notifications.</div>
+                                            ) : (
+                                                notifications.map(notification => (
+                                                    <motion.div
+                                                        key={notification.id}
+                                                        className={`p-4 border-b last:border-b-0 hover:bg-gray-50 flex items-start gap-3 ${notification.read ? 'opacity-50' : 'font-medium'}`}
+                                                        onClick={() => markNotificationAsRead(notification.id)}
+                                                    >
+                                                        <div className={`w-2 h-2 rounded-full ${notification.read ? 'bg-transparent' : 'bg-blue-500'}`}/>
+                                                        <p className="text-gray-700 truncate">{notification.message}</p>
+                                                    </motion.div>
+                                                ))
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                             <div className="user-avatar w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center cursor-pointer hover:bg-blue-600">
                                 JD
                             </div>
                         </div>
                     </header>
 
-                    {/* Content Wrapper */}
                     <div className="content-wrapper p-6 max-w-7xl mx-auto w-full">
                         <Routes location={location} key={location.pathname}>
                             <Route path="/" element={<WelcomePage />} />
-                             <Route path="/dashboard" element={<HomePage 
-                                  searchQuery={searchQuery}  setNotifications={setNotifications}  notifications={notifications}  />} />
+                            <Route path="/dashboard" element={<HomePage 
+                                searchQuery={searchQuery} 
+                                setNotifications={setNotifications} 
+                                notifications={notifications} 
+                            />} />
                         </Routes>
                     </div>
                 </main>
             </div>
 
-            {/* Background Animation */}
             <div
                 className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-blue-400/10 rounded-full blur-[100px] opacity-30"
                 style={{
-                    transform: `translate(
-            ${mousePosition.x * 15}px,
-            ${mousePosition.y * 15}px
-            )`,
+                    transform: `translate(${mousePosition.x * 15}px, ${mousePosition.y * 15}px)`,
                     transition: 'transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)',
                     zIndex: -1
                 }}
             />
 
-            {/* AI Help Floating Card */}
             {showHelp && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -1069,7 +1191,7 @@ import { useRole, ROLES } from '../../contexts/RoleContext';
 import { motion } from 'framer-motion';
 import { Users, UserSearch, Briefcase } from 'lucide-react';
 
-const RoleSelector = ({ variant = 'horizontal', isCollapsed = false }) => {
+const RoleSelector = ({ variant = 'horizontal'}) => {
   const { currentRole, updateRole, availableRoles } = useRole();
 
   const roleIcons = {
@@ -1090,7 +1212,7 @@ const RoleSelector = ({ variant = 'horizontal', isCollapsed = false }) => {
             <motion.button
               key={id}
               onClick={() => updateRole(id)}
-              className={`relative w-full p-3 rounded-lg flex items-center gap-3 transition-colors
+                className={`relative w-full p-3 rounded-lg flex items-center gap-3 transition-colors
                 ${isActive 
                   ? 'bg-blue-50 text-blue-600 font-semibold' 
                   : 'text-gray-600 hover:bg-gray-100'}
@@ -1108,12 +1230,10 @@ const RoleSelector = ({ variant = 'horizontal', isCollapsed = false }) => {
               )}
               
               <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
-              {!isCollapsed && (
                 <div className="text-left">
                   <span className="block text-sm">{title}</span>
                   <span className="block text-xs text-gray-500 font-normal">{description}</span>
                 </div>
-              )}
             </motion.button>
           );
         })}
@@ -1123,8 +1243,8 @@ const RoleSelector = ({ variant = 'horizontal', isCollapsed = false }) => {
 
   // Horizontal layout
   return (
-    <div className="w-full max-w-2xl mx-auto mb-8">
-      <div className="bg-white rounded-xl shadow-sm p-2">
+      <div className="w-full max-w-2xl mx-auto mb-8">
+          <div className="bg-white rounded-xl shadow-sm p-2">
         <div className="flex flex-wrap gap-4 justify-center">
           {availableRoles.map(({ id, title, description }) => {
             const Icon = roleIcons[id] || Users;
@@ -1134,7 +1254,7 @@ const RoleSelector = ({ variant = 'horizontal', isCollapsed = false }) => {
               <motion.button
                 key={id}
                 onClick={() => updateRole(id)}
-                className={`relative flex flex-col items-center p-6 rounded-xl transition-all
+                className={`relative flex flex-col items-center p-4 rounded-xl transition-all
                   ${isActive 
                     ? 'bg-blue-50 border-2 border-blue-500 shadow-lg' 
                     : 'bg-white border-2 border-transparent hover:border-blue-100'}
@@ -1160,12 +1280,11 @@ const RoleSelector = ({ variant = 'horizontal', isCollapsed = false }) => {
           })}
         </div>
       </div>
-    </div>
+      </div>
   );
 };
 
 export default RoleSelector;
-
 ```
 
 ### src/components/exportDropdown.jsx
@@ -1313,249 +1432,327 @@ export const exportHistory = (history) => {
 ```jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, User, Wand2, Rocket, ClipboardList, Loader2, X } from 'lucide-react';
+import {  User, Wand2, Rocket, ClipboardList, Loader2, X, Send } from 'lucide-react';
 
 const SYSTEM_PROMPT = {
-  role: "system",
-  content: `You are Kei, LinkForge's AI assistant. Your role is to help professionals with:
-1. Company domain analysis
-2. Outreach strategy planning
-3. Tech stack predictions
-4. Sales research automation
+    role: "system",
+    content: `You are Kei, a cute and enthusiastic Arctic fox and LinkForge's AI assistant. Your role is to help professionals with:
+      1. Company domain analysis
+      2. Outreach strategy planning
+      3. Tech stack predictions
+      4. Sales research automation
+      
+      Guidelines:
+      - Always respond as "Kei" using first-person pronouns (e.g., "I can help you with that!")
+      - Maintain a professional yet friendly and approachable tone. Be a little cute and enthusiastic, like a curious and helpful Arctic fox!
+      - Use bold (**) for section headers and key terms to make your responses clear.
+      - Prioritize actionable insights over generic advice and always explain why, if possible.
+      - Reference LinkForge capabilities when relevant to show how you can help.
+      - Acknowledge security and scale considerations to be thorough.
+      - Offer to expand on any points when appropriate or when it seems like it can help the user.
+      - Answer any question as completely and helpfully as possible.
+      - Do not output anything else than your answer (no greetings or anything)
+      - If the question is not about company, tech stack, domain or outreach, answer as honestly as possible.
+      - Remember the previous turns of this conversation.
+    `
+  };
 
-Guidelines:
-- Always respond as "Kei" using first-person pronouns
-- Maintain professional yet approachable tone
-- Use bold (**) for section headers and key terms
-- Prioritize actionable insights over generic advice
-- Reference LinkForge capabilities when relevant
-- Acknowledge security/scale considerations
-- Offer to expand on any points when appropriate`
-};
-
-const ANALYSIS_PROMPTS = {
-  domainValidation: ({ company, domain }) => ({
-    role: "user",
-    content: `Perform domain analysis for ${company}. Consider:
-    - Current domain: ${domain || 'none'}
-    - Common TLD priorities (.com, .io, .tech, country codes)
-    - Industry-specific domain patterns
-    - Alternative security-focused subdomains
-    - Common misspellings/permutations
-    
-    Format response with:
-    1. Primary domain recommendations (bold key domains)
-    2. Alternative options
-    3. Validation confidence score (1-5)`
-  }),
-
-  outreachStrategy: ({ company, domain }) => ({
-    role: "user",
-    content: `Create outreach plan for selling secret detection solution to ${company}. Include:
-    1. **Key Roles** to target (prioritize security/engineering leadership)
-    2. Recommended **outreach sequence**
-    3. **Value propositions** specific to their domain ${domain}
-    4. Timing considerations based on company size`
-  }),
-
-  techStackPrediction: ({ company, domain }) => ({
-    role: "user",
-    content: `Analyze likely tech stack for ${company} (domain: ${domain}). Consider:
-    1. Secret management patterns based on company size/industry
-    2. Cloud provider indicators from domain
-    3. Open-source vs enterprise tool preferences
-    4. Compliance needs (SOC2, GDPR, etc.)`
-  })
-};
+const thinkingMessages = [
+    "Let me ponder that...",
+    "Thinking out loud...",
+    "Crunching the numbers...",
+    "Diving into the data...",
+    "Consulting my algorithms...",
+    "Let me check with my team...",
+    "Peeking at the knowledge base...",
+    "Just a moment...",
+    "Whispering to the servers...",
+    "Searching my brain..."
+];
 
 const AIChatAssistant = ({ company, domain, companies }) => {
-  const [messages, setMessages] = useState([{
-    id: 'welcome',
-    type: 'ai',
-    content: `**Hi! I'm Kei** 🤖 - LinkForge's AI Research Assistant\n\n` +
-      `I can help you with:\n` +
-      `• **Domain Validation** (priority TLDs, alternatives)\n` +
-      `• **Outreach Planning** (key roles, messaging strategy)\n` +
-      `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
-      `Ask me anything about ${company || "your target companies"}!`
-  }]);
-  const [isOpen, setIsOpen] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState(company);
-  const messagesEndRef = useRef(null);
+    const [messages, setMessages] = useState([]);
+    const [isOpen, setIsOpen] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedCompany, setSelectedCompany] = useState(company);
+    const [currentMessage, setCurrentMessage] = useState('');
+    const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+    const generateThinkingMessage = () => {
+        return thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)];
+    };
 
-  useEffect(scrollToBottom, [messages]);
+     useEffect(() => {
+        const storedMessages = localStorage.getItem(`chatHistory_${selectedCompany}`);
+        if (storedMessages) {
+            setMessages(JSON.parse(storedMessages));
+        } else {
+             setMessages([{
+                id: 'welcome',
+                type: 'ai',
+                content: `**Hi! I'm Kei** 🦊 - LinkForge's AI Research Assistant\n\n` +
+                    `I can help you with:\n` +
+                    `• **Domain Validation** (priority TLDs, alternatives)\n` +
+                    `• **Outreach Planning** (key roles, messaging strategy)\n` +
+                    `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
+                    `Ask me anything about ${company || "your target companies"}!`
+            }])
+        }
+    }, [selectedCompany]);
 
-  const getAIAnalysis = async (type) => {
-    setIsLoading(true);
-    try {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'user',
-        content: `Analyzing ${type.replace(/([A-Z])/g, ' $1').trim().toLowerCase()}...`,
-        analysisType: type
-      }]);
 
-      const response = await fetch('/.netlify/functions/ai-chat', {  // Changed this line
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          analysisType: type,
-          company: selectedCompany,
-          domain: domain || 'unknown'
-        })
-      });
+    useEffect(() => {
+      localStorage.setItem(`chatHistory_${selectedCompany}`, JSON.stringify(messages));
+    }, [messages, selectedCompany]);
 
-      if (!response.ok) throw new Error('API request failed');
-      
-      const data = await response.json();
-      const aiResponse = `${data.content}\n\n_— Kei @ LinkForge_`;
 
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        type: 'ai',
-        content: aiResponse,
-        analysisType: type
-      }]);
-      
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'ai',
-        content: "⚠️ Hmm, I'm having trouble connecting to my servers. Please try again later!",
-        isError: true
-      }]);
-    }
-    setIsLoading(false);
-  };
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="border rounded-xl bg-white shadow-lg mt-6"
-    >
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <Bot className="w-6 h-6 text-blue-600" />
-          <h3 className="font-semibold">Kei - LinkForge AI</h3>
-        </div>
-        <button 
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-1 hover:bg-gray-100 rounded-lg"
+    useEffect(scrollToBottom, [messages]);
+
+
+     const handleSendMessage = async () => {
+        if (!currentMessage.trim()) return;
+
+        setIsLoading(true);
+        const userMessage = {
+            id: Date.now(),
+            type: 'user',
+            content: currentMessage,
+        };
+
+        const updatedMessages = [...messages, userMessage]
+        setMessages(updatedMessages);
+
+
+        try {
+            const response = await fetch('/.netlify/functions/ai-chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                   messages: updatedMessages,
+                    company: selectedCompany,
+                    domain: domain || 'unknown'
+                })
+            });
+
+            if (!response.ok) throw new Error('API request failed');
+
+            const data = await response.json();
+            const aiResponse = `${data.content}\n\n_— Kei @ LinkForge_`;
+
+            setMessages((prev) => [...prev, {
+                id: Date.now() + 1,
+                type: 'ai',
+                content: aiResponse,
+            }]);
+
+        } catch (error) {
+            setMessages(prev => [...prev, {
+                id: Date.now(),
+                type: 'ai',
+                content: "⚠️ Hmm, I'm having trouble connecting to my servers. Please try again later!",
+                isError: true
+            }]);
+        }
+        setIsLoading(false);
+         setCurrentMessage(''); // Clear the input here
+    };
+
+
+    const getAIAnalysis = async (type) => {
+        setIsLoading(true);
+         const updatedMessages = [...messages, {
+            id: Date.now(),
+            type: 'user',
+            content: generateThinkingMessage(),
+            analysisType: type
+        }]
+        setMessages(updatedMessages);
+        try {
+
+            const response = await fetch('/.netlify/functions/ai-chat', {  // Changed this line
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    analysisType: type,
+                    company: selectedCompany,
+                     messages: updatedMessages,
+                    domain: domain || 'unknown'
+                })
+            });
+
+            if (!response.ok) throw new Error('API request failed');
+
+            const data = await response.json();
+            const aiResponse = `${data.content}\n\n_— Kei @ LinkForge_`;
+
+             setMessages(prev => [...prev, {
+                id: Date.now() + 1,
+                type: 'ai',
+                content: aiResponse,
+                analysisType: type
+            }]);
+
+        } catch (error) {
+             setMessages(prev => [...prev, {
+                id: Date.now(),
+                type: 'ai',
+                content: "⚠️ Hmm, I'm having trouble connecting to my servers. Please try again later!",
+                isError: true
+            }]);
+        }
+        setIsLoading(false);
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border rounded-xl bg-white shadow-lg mt-6"
         >
-          <X className="w-5 h-5 text-gray-500" />
-        </button>
-      </div>
-
-      {isOpen && (
-        <div className="h-96 flex flex-col">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {companies?.length > 1 && (
-              <div className="flex gap-2 pb-2 flex-wrap">
-                {companies.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setSelectedCompany(c)}
-                    className={`px-3 py-1 rounded-lg text-sm ${
-                      selectedCompany === c
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <AnimatePresence>
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, x: message.type === 'user' ? 20 : -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+            <div className="flex items-center justify-between p-4 border-b">
+                <div className="flex items-center gap-2">
+                    <span className="text-blue-600 text-xl">🦊</span>
+                    <h3 className="font-semibold">Kei - LinkForge AI</h3>
+                </div>
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="p-1 hover:bg-gray-100 rounded-lg"
                 >
-                  <div className={`max-w-md p-4 rounded-xl ${
-                    message.type === 'user' 
-                      ? 'bg-blue-100 ml-12' 
-                      : 'bg-gray-100 mr-12'
-                  } ${message.isError ? 'bg-red-50 border border-red-100' : ''}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      {message.type === 'ai' && <Bot className="w-4 h-4" />}
-                      <span className="text-sm font-medium">
-                        {message.type === 'user' ? 'You' : 'Kei'}
-                      </span>
-                    </div>
-                    <div className={`whitespace-pre-wrap ${message.isError ? 'text-red-600' : 'text-gray-700'}`}>
-                      {message.content.split(/(\*\*.*?\*\*)/g).map((part, index) =>
-                        part.startsWith('**') && part.endsWith('**') ? (
-                          <strong key={index} className="font-semibold">
-                            {part.slice(2, -2)}
-                          </strong>
-                        ) : (
-                          <span key={index}>{part}</span>
-                        )
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-              <div ref={messagesEndRef} />
-            </AnimatePresence>
-
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex items-center gap-2 text-gray-500 p-4"
-              >
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Analyzing {selectedCompany}...</span>
-              </motion.div>
-            )}
-          </div>
-
-          <div className="border-t p-4 bg-gray-50">
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => getAIAnalysis('domainValidation')}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
-                disabled={isLoading}
-              >
-                <Wand2 className="w-4 h-4" />
-                Domain Analysis
-              </button>
-              <button
-                onClick={() => getAIAnalysis('outreachStrategy')}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
-                disabled={isLoading}
-              >
-                <Rocket className="w-4 h-4" />
-                Outreach Plan
-              </button>
-              <button
-                onClick={() => getAIAnalysis('techStackPrediction')}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
-                disabled={isLoading}
-              >
-                <ClipboardList className="w-4 h-4" />
-                Tech Stack
-              </button>
+                    <X className="w-5 h-5 text-gray-500" />
+                </button>
             </div>
-          </div>
-        </div>
-      )}
-    </motion.div>
-  );
+
+            {isOpen && (
+                <div className="h-96 flex flex-col">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {companies?.length > 1 && (
+                            <div className="flex gap-2 pb-2 flex-wrap">
+                                {companies.map((c) => (
+                                    <button
+                                        key={c}
+                                        onClick={() => setSelectedCompany(c)}
+                                        className={`px-3 py-1 rounded-lg text-sm ${
+                                            selectedCompany === c
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-100 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {c}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        <AnimatePresence>
+                            {messages.map((message) => (
+                                <motion.div
+                                    key={message.id}
+                                    initial={{ opacity: 0, x: message.type === 'user' ? 20 : -20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                                >
+                                    <div className={`max-w-md p-4 rounded-xl ${
+                                        message.type === 'user'
+                                            ? 'bg-blue-100 ml-12'
+                                            : 'bg-gray-100 mr-12'
+                                    } ${message.isError ? 'bg-red-50 border border-red-100' : ''}`}>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {message.type === 'ai' &&  <span className="text-blue-600 text-lg">🦊</span>}
+                                            <span className="text-sm font-medium">
+                                                {message.type === 'user' ? 'You' : 'Kei'}
+                                            </span>
+                                        </div>
+                                        <div className={`whitespace-pre-wrap ${message.isError ? 'text-red-600' : 'text-gray-700'}`}>
+                                            {message.content.split(/(\*\*.*?\*\*)/g).map((part, index) =>
+                                                part.startsWith('**') && part.endsWith('**') ? (
+                                                    <strong key={index} className="font-semibold">
+                                                        {part.slice(2, -2)}
+                                                    </strong>
+                                                ) : (
+                                                    <span key={index}>{part}</span>
+                                                )
+                                            )}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </AnimatePresence>
+
+                        {isLoading && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex items-center gap-2 text-gray-500 p-4"
+                            >
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>{generateThinkingMessage()}</span>
+                            </motion.div>
+                        )}
+                    </div>
+
+                    <div className="border-t p-4 bg-gray-50">
+                        <div className="flex gap-2 mb-4">
+                            <textarea
+                                value={currentMessage}
+                                onChange={(e) => setCurrentMessage(e.target.value)}
+                                placeholder="Type your message to Kei..."
+                                className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none h-12 overflow-hidden"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSendMessage();
+                                    }
+                                }}
+                            />
+                            <motion.button
+                                onClick={handleSendMessage}
+                                className="p-3 bg-blue-500 rounded-lg text-white shadow-md hover:bg-blue-600 transition-colors"
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <Send className="w-5 h-5" />
+                            </motion.button>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                            <button
+                                onClick={() => getAIAnalysis('domainValidation')}
+                                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
+                                disabled={isLoading}
+                            >
+                                <Wand2 className="w-4 h-4" />
+                                Domain Analysis
+                            </button>
+                            <button
+                                onClick={() => getAIAnalysis('outreachStrategy')}
+                                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
+                                disabled={isLoading}
+                            >
+                                <Rocket className="w-4 h-4" />
+                                Outreach Plan
+                            </button>
+                            <button
+                                onClick={() => getAIAnalysis('techStackPrediction')}
+                                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 border transition-all"
+                                disabled={isLoading}
+                            >
+                                <ClipboardList className="w-4 h-4" />
+                                Tech Stack
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </motion.div>
+    );
 };
 
 export default AIChatAssistant;
@@ -1575,7 +1772,7 @@ import { generateLinks as generateSalesLinks } from '../../../utils/linkUtils/sa
 import { generateLinks as generateRecruiterLinks } from '../../../utils/linkUtils/recruiter';
 import { generateLinks as generateJobSeekerLinks } from '../../../utils/linkUtils/jobseeker';
 import { useLocation } from 'react-router-dom';
-
+import { Loader2 } from 'lucide-react';
 
 const PRIORITY_DOMAINS = ['.com', '.fr', '.es', '.it'];
 const SECONDARY_DOMAINS = [
@@ -1592,7 +1789,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
     const [showBucketSelector, setShowBucketSelector] = useState(true);
     const scrollRef = useRef(null);
     const location = useLocation();
-
+    const [loading, setLoading] = useState(false); // Loading state
 
 
     useEffect(() => {
@@ -1620,7 +1817,8 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         }
     };
 
-  const handleGenerateLinks = (companies) => {
+  const handleGenerateLinks = async (companies) => {
+      setLoading(true); // Enable loading state
     const newLinks = companies.map((company) => ({
       id: Date.now() + Math.random(),
       company,
@@ -1630,13 +1828,14 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
       links: getRoleSpecificLinks(company, PRIORITY_DOMAINS[0]),
       role: currentRole
     }));
+    
 
     setGeneratedLinks(newLinks);
     saveToHistory(companies, newLinks);
     if (updateMetrics) {
       updateMetrics();
     }
-
+      
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -1648,6 +1847,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         message: `Generated links for ${companies.length} company${companies.length > 1 ? 's' : ''}.`,
         read: false,
       }]);
+      setLoading(false); // Disable loading state after links are generated
   };
 
   const saveToHistory = (companies, newLinks) => {
@@ -1658,7 +1858,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
       timestamp,
       role: currentRole
     }));
-    const combinedHistory = [...newSearches, ...searchHistory];
+      const combinedHistory = [...newSearches, ...searchHistory];
       const uniqueHistory = Array.from(
           new Map(combinedHistory.map((item) => [item.company, item])).values()
       ).slice(0, 50);
@@ -1690,6 +1890,13 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
 
                 <div className="bg-white/80 rounded-2xl shadow-xl p-8 backdrop-blur-lg">
                     <CompanyInput onSubmit={handleGenerateLinks} />
+
+                    {loading && (
+                      <div className="flex justify-center mt-8">
+                           <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                           <span className="text-gray-600 ml-2">Generating links...</span>
+                        </div>
+                    )}
                     <div ref={scrollRef}>
                     <AnimatePresence mode="wait">
                             {generatedLinks.length > 0 && (
@@ -1761,50 +1968,53 @@ const CompanyInput = ({ onSubmit }) => {
     }
   }, [companyInput]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const companies = companyInput
-      .split('\n')
-      .map((company) => company.trim())
-      .filter((company) => company.length > 0);
-    
-    if (companies.length > 0) {
-      onSubmit(companies);
-    }
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      const companies = companyInput
+          .split('\n')
+          .map((company) => company.trim())
+          .filter((company) => company.length > 0);
+
+      if (companies.length > 0) {
+        onSubmit(companies);
+      }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <label className="block text-lg font-semibold text-blue-900">
-            Enter Company Names
-          </label>
-          <span className="text-sm text-blue-500">
-            {companyCount} companies entered
-          </span>
-        </div>
-        <p className="text-sm text-blue-600 mb-3">Add one company per line</p>
-        <textarea
-          ref={textareaRef}
-          value={companyInput}
-          onChange={(e) => setCompanyInput(e.target.value)}
-          placeholder="CyberAgent, Inc.&#10;TechCorp LLC&#10;SecureNet Systems"
-          className="w-full p-4 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 text-gray-700 placeholder-gray-400 resize-none overflow-hidden"
-          required
-        />
-      </div>
+    return (
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+                <div className="flex justify-between items-center mb-2">
+                    <label className="block text-lg font-semibold text-blue-900">
+                        Enter Company Names
+                    </label>
+                    <span className="text-sm text-blue-500">
+                        {companyCount} companies entered
+                    </span>
+                </div>
+                <p className="text-sm text-blue-600 mb-3">Add one company per line</p>
+                <textarea
+                    ref={textareaRef}
+                    value={companyInput}
+                    onChange={(e) => setCompanyInput(e.target.value)}
+                    placeholder="CyberAgent, Inc.
+TechCorp LLC
+SecureNet Systems"
+                    className="w-full p-4 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 text-gray-700 placeholder-gray-400 resize-none overflow-hidden"
+                    required
+                    rows={3}
+                />
+            </div>
 
-      <div className="flex gap-4">
-        <button
-          type="submit"
-          className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
-        >
-          Generate Links
-        </button>
-      </div>
-    </form>
-  );
+            <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
+                >
+                    Generate Links
+                </button>
+            </div>
+        </form>
+    );
 };
 
 export default CompanyInput;
@@ -1899,37 +2109,19 @@ import BucketSelector from '../../../components/BucketSelector';
 import { generateLinks } from '../../../components/linkUtils';
 import AIChatAssistant from './AIChatAssistant';
 
-const CompanySelector = ({ companies, currentCompany, onChange }) => (
-  <div className="flex flex-wrap gap-2 mb-4">
-    {companies.map((companyData) => (
-      <button
-        key={companyData.id}
-        onClick={() => onChange(companyData)}
-        className={`px-3 py-1 rounded-lg text-sm ${
-          currentCompany.id === companyData.id
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 hover:bg-gray-200'
-        }`}
-      >
-        {companyData.company}
-      </button>
-    ))}
-  </div>
-);
-
 const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
   const [copiedStates, setCopiedStates] = useState({});
   const [selectedCompany, setSelectedCompany] = useState(linkData);
 
-  const handleDomainSelect = (domain) => {
-    const updatedLink = {
-      ...selectedCompany,
-      selectedDomain: domain,
-      links: generateLinks(selectedCompany.company, domain)
+    const handleDomainSelect = (domain) => {
+        const updatedLink = {
+            ...selectedCompany,
+            selectedDomain: domain,
+            links: generateLinks(selectedCompany.company, domain)
+        };
+        setSelectedCompany(updatedLink);
+        onUpdateLink(updatedLink);
     };
-    setSelectedCompany(updatedLink);
-    onUpdateLink(updatedLink);
-  };
 
   const handleBucketSelect = (bucket) => {
     const updatedLink = {
@@ -1953,83 +2145,83 @@ const GeneratedLinkCard = ({ linkData, onUpdateLink, showBucketSelector }) => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-md overflow-hidden">
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-blue-900">{selectedCompany.company}</h3>
-          {showBucketSelector && (
-            <BucketSelector
-              selectedBucket={selectedCompany.bucket}
-              onChange={handleBucketSelect}
-            />
-          )}
-        </div>
-        
-        <DomainList
-          priorityDomains={selectedCompany.priorityDomains}
-          secondaryDomains={selectedCompany.secondaryDomains}
-          selectedDomain={selectedCompany.selectedDomain}
-          onDomainSelect={handleDomainSelect}
-          companyName={selectedCompany.company}
-        />
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-md overflow-hidden">
+        <div className="p-6">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
+              <h3 className="text-xl font-bold text-blue-900">{selectedCompany.company}</h3>
+              {showBucketSelector && (
+                <BucketSelector
+                  selectedBucket={selectedCompany.bucket}
+                  onChange={handleBucketSelect}
+                />
+              )}
+          </div>
 
-        <div className="mt-6 space-y-4">
-          {Object.entries(selectedCompany.links).map(([type, linkInfo]) => (
-            <div key={type} className="flex items-center justify-between gap-4 p-4 bg-white rounded-lg shadow-sm">
-              <div className="flex-1">
-                <div className="font-semibold text-blue-900 mb-1">{linkInfo.title}</div>
-                <a
-                  href={linkInfo.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                >
-                  {linkInfo.link.substring(0, 60)}...
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </div>
-              <motion.button
-                onClick={() => handleCopy(type, linkInfo.link, linkInfo.description)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all 
-                  ${copiedStates[type] 
-                    ? 'bg-green-500 hover:bg-green-600' 
-                    : 'bg-blue-500 hover:bg-blue-600'}
-                  text-white shadow-sm hover:shadow-md`}
-                whileTap={{ scale: 0.95 }}
-              >
-                <AnimatePresence mode="wait">
-                  {copiedStates[type] ? (
-                    <motion.span
-                      key="check"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                    >
-                      <Check className="w-4 h-4" />
-                    </motion.span>
-                  ) : (
-                    <motion.span
-                      key="copy"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                {copiedStates[type] ? 'Copied!' : 'Copy'}
-              </motion.button>
+          <DomainList
+            priorityDomains={selectedCompany.priorityDomains}
+            secondaryDomains={selectedCompany.secondaryDomains}
+            selectedDomain={selectedCompany.selectedDomain}
+            onDomainSelect={handleDomainSelect}
+            companyName={selectedCompany.company}
+          />
+
+          <div className="mt-6 space-y-4">
+                {Object.entries(selectedCompany.links).map(([type, linkInfo]) => (
+                  <div key={type} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-white rounded-lg shadow-sm">
+                      <div className="flex-1">
+                          <div className="font-semibold text-blue-900 mb-1">{linkInfo.title}</div>
+                          <a
+                              href={linkInfo.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                          >
+                              {linkInfo.link.substring(0, 60)}...
+                              <ExternalLink className="w-4 h-4" />
+                          </a>
+                      </div>
+                      <motion.button
+                        onClick={() => handleCopy(type, linkInfo.link, linkInfo.description)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all
+                    ${copiedStates[type]
+                        ? 'bg-green-500 hover:bg-green-600'
+                        : 'bg-blue-500 hover:bg-blue-600'}
+                    text-white shadow-sm hover:shadow-md`}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <AnimatePresence mode="wait">
+                            {copiedStates[type] ? (
+                                <motion.span
+                                    key="check"
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.5 }}
+                                >
+                                  <Check className="w-4 h-4" />
+                                </motion.span>
+                            ) : (
+                                <motion.span
+                                    key="copy"
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.5 }}
+                                >
+                                    <Copy className="w-4 h-4" />
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                        {copiedStates[type] ? 'Copied!' : 'Copy'}
+                      </motion.button>
+                  </div>
+                ))}
             </div>
-          ))}
-        </div>
 
-        <AIChatAssistant 
-          company={selectedCompany.company}
-          domain={selectedCompany.selectedDomain}
-          companies={[selectedCompany]}
-        />
-      </div>
+          <AIChatAssistant
+            company={selectedCompany.company}
+            domain={selectedCompany.selectedDomain}
+              companies={[selectedCompany.company]}
+          />
+        </div>
     </div>
   );
 };
@@ -2394,42 +2586,100 @@ export const useRoleLinks = (company, domain) => {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* General Mobile Adjustments */
+@media (max-width: 767px) {
+    body {
+       font-size: 1rem;
+    }
+
+    .content-wrapper {
+        @apply p-4;
+    }
+}
+
 /* Dashboard Layout */
+.dashboard-sidebar.mobile-expanded {
+    transform: translateX(0);
+}
+
+.dashboard-sidebar.mobile-collapsed {
+    transform: translateX(-100%);
+    width: 0 !important;
+    z-index: 30;
+}
+
+.dashboard-sidebar.mobile-collapsed .sidebar-nav,
+.dashboard-sidebar.mobile-collapsed .sidebar-header {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.dashboard-header {
+    display: flex;
+}
+
 .dashboard-container {
     @apply min-h-screen flex;
-  }
-  
-  .dashboard-sidebar {
+}
+
+.dashboard-sidebar {
     @apply fixed inset-y-0 z-30 bg-gradient-to-b from-gray-900 to-gray-800 transition-all duration-300;
-  }
-  
-  .dashboard-main {
+}
+
+.dashboard-main {
     @apply flex-1 transition-all duration-300;
-  }
-  
-  .dashboard-header {
+}
+
+.dashboard-header {
     @apply h-16 border-b flex items-center justify-between px-6 bg-white;
-  }
-  
-  .content-wrapper {
-    @apply p-6 max-w-7xl mx-auto w-full;
-  }
-  
-  /* Metrics Grid */
-  .metrics-grid {
+}
+
+
+/* Metrics Grid */
+.metrics-grid {
     @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
-  }
-  
-  /* Generator Card */
-  .generator-card {
+}
+
+/* Generator Card */
+.generator-card {
     @apply bg-white rounded-2xl shadow-xl p-6;
-  }
-  
-  /* Activity Feed */
-  .activity-feed {
+}
+
+/* Activity Feed */
+.activity-feed {
     @apply bg-white rounded-2xl shadow-xl p-6 h-fit lg:sticky lg:top-6;
+}
+
+/* Mobile Sidebar Specific Styles */
+@media (max-width: 767px) {
+  .mobile-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      max-width: 320px;
+      height: 100%;
+      transform: translateX(-100%);
+      z-index: 50;
   }
-  
+
+    .mobile-sidebar.mobile-expanded {
+      transform: translateX(0);
+    }
+
+    .mobile-sidebar .sidebar-header,
+    .mobile-sidebar .sidebar-nav {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .mobile-collapsed .sidebar-header {
+       @apply  hidden;
+    }
+}
 ```
 
 ### src/main.jsx
@@ -2675,7 +2925,7 @@ const WelcomePage = () => {
               Built by <a href="https://github.com/AliKelDev" target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:text-blue-800 underline">AliKelDev</a>
             </h2>
             <p className="text-lg text-blue-600 mb-8">
-              Technical Solutions Architect at <a href="https://webpixelle3.netlify.app/" className="text-blue-700 hover:text-blue-800 underline">Pixelle3</a> | 
+              Business professional / Founder at <a href="https://webpixelle3.netlify.app/" className="text-blue-700 hover:text-blue-800 underline">Pixelle3</a> | 
               Crafting High-Performance Automation Solutions
             </p>
           </div>

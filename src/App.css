@@ -1,3 +1,77 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* App.css */
+/* Mobile Media Queries */
+@media (max-width: 767px) {
+    /* Typography Adjustments */
+    body {
+      @apply text-base;
+    }
+  
+    h1 {
+      @apply text-2xl;
+    }
+  
+    h2 {
+      @apply text-xl;
+    }
+  
+    h3 {
+      @apply text-lg;
+    }
+  
+    /* Spacing Adjustments */
+    .content-wrapper {
+      @apply p-4;
+    }
+  
+    /* Form Element Adjustments */
+    input, select, textarea {
+      @apply text-base;
+    }
+  
+    /* Button Adjustments */
+    button {
+      @apply min-h-[44px];
+    }
+  }
+  
+  /* Mobile Landscape Adjustments */
+  @media (max-height: 480px) and (orientation: landscape) {
+    .dashboard-sidebar {
+      @apply h-screen overflow-y-auto;
+    }
+  
+    .content-wrapper {
+      @apply py-2;
+    }
+  }
+  
+  /* Dark Mode Support */
+  @media (prefers-color-scheme: dark) {
+    .dark-mode-support {
+      @apply bg-gray-900 text-white;
+    }
+  }
+  
+  /* Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  
+  /* High Contrast Mode */
+  @media (prefers-contrast: more) {
+    .high-contrast {
+      @apply border-2 border-current;
+    }
+  }
+  
+  /* Print Styles */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+  }
