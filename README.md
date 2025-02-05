@@ -1,94 +1,105 @@
-# 🔗 LinkForge: Enterprise-Grade Search Automation
+# Alikel Linkgen
 
-**Precision-targeted company search links at scale**  
-*React-powered solution for generating bulk LinkedIn search URLs with AI-assisted domain validation*
+A React-based LinkedIn search automation tool designed to streamline the process of finding relevant professionals on LinkedIn Sales Navigator.
 
-<div align="center">
-  <a href="https://linkforge-alikeldev.netlify.app/">
-    <img alt="Live Demo" src="https://img.shields.io/badge/Live_Demo-00C7B7?style=for-the-badge&logo=netlify&logoColor=white">
-  </a>
-  <img alt="MIT License" src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge"/>
-  <img alt="React" src="https://img.shields.io/badge/Built_with-React-61DAFB?style=for-the-badge&logo=react">
-</div>
+![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white)
+![Netlify](https://img.shields.io/badge/Netlify-Functions-00C7B7?logo=netlify&logoColor=white)
 
-<div align="center">
-  <img src="public/screenshot.png" alt="LinkForge Interface" width="800" style="border-radius: 12px; margin: 20px 0">
-</div>
+## Purpose
 
-## 🚀 Live Demo
+Alikel Linkgen helps sales professionals and recruiters generate targeted LinkedIn Sales Navigator search URLs in bulk, with intelligent domain validation and role-specific search patterns.
 
-Experience LinkForge in action:  
-[https://linkforge-alikeldev.netlify.app/](https://linkforge-alikeldev.netlify.app/)
+### Why Use Alikel Linkgen?
 
-## ✨ Core Capabilities
+Unlike traditional Sales Navigator saved searches, Alikel Linkgen allows you to:
+- Generate multiple search URLs for an unlimited number of companies at once
+- Create separate, parallel searches for different departments (tech, finance, etc.) simultaneously
+- Save and manage your search history across sessions
+- Export your searches in CSV format for team collaboration
 
-| Feature | Implementation | Tech Stack |
-|---------|----------------|------------|
-| **Multi-Role Generation** | Sales/Recruiter/JobSeeker modes | Context API + Dynamic Routing |
-| **Domain Intelligence** | 150+ TLD support with priority scoring | Domain Matrix Engine |
-| **Bulk Processing** | CSV/JSON export with search history | PapaParse + XLSX |
-| **Interactive UI** | Animated workspace transitions | Framer Motion + Tailwind |
+## Key Features
 
-```jsx
-// Current role switching implementation
-const RoleContext = createContext({
-  currentRole: 'sales',
-  updateRole: (newRole) => {}
-});
-```
+- **Multi-Role Support**: Tailored search patterns for:
+  - Sales Teams (Dev, Security/IAM, Finance decision-makers)
+  - Recruiters (Tech candidates, Tech leaders, Finance candidates)
+  - Job Seekers (Peer search, HR contacts, Finance contacts)
 
-## 🛠 Technical Architecture
+- **Bulk Generation**: Process multiple companies simultaneously with CSV/JSON export capabilities
 
-```mermaid
-graph TD
-    A[User Input] --> B(Domain Validator)
-    B --> C{Valid TLD?}
-    C -->|Yes| D[Link Generator]
-    C -->|No| E[Alternative Suggestions]
-    D --> F[(Search History)]
-    E --> F
-    F --> G[Export Engine]
-```
+- **Company Size Classification**: Built-in bucket selector to categorize companies based on development and security team sizes
 
-## 🚧 Future Roadmap
+- **AI-Powered Assistant**: Integrated chat assistant (Kei) for:
+  - Domain validation
+  - Outreach strategy planning
+  - Tech stack analysis
 
-### Q4 2024: Sector Expansion
+- **Search History**: Cross-session tracking and export functionality
 
-| Sector | Status | Target Features |
-|--------|--------|----------------|
-| Finance | Planned | Banking TLDs, Compliance Filters |
-| Healthcare | Research | Medical Domains, HIPAA Patterns |
-| Web3 | Prototype | .crypto, .dao, Blockchain Filters |
+## Tech Stack
 
-```js
-// Planned sector configuration
-const FINANCE_CONFIG = {
-  domains: ['.finance', '.bank', '.invest'],
-  filters: {
-    include: ['CFO', 'Compliance'],
-    exclude: ['Engineering', 'IT']
-  }
-};
-```
+- **Frontend**: React 18.3 with Vite
+- **Styling**: Tailwind CSS with custom animations
+- **State Management**: React Context API
+- **UI Components**: 
+  - Framer Motion for animations
+  - Lucide React for icons
+  - Headless UI components
+- **Backend**: Netlify Functions with AI integration
+- **Data Handling**: PapaParse for CSV processing
 
-## 🛠️ Development Setup
+## Getting Started
 
 ```bash
-# Clone with depth
-git clone --depth=1 https://github.com/AliKelDev/LinkForge.git
+# Clone the repository
+git clone https://github.com/AliKelDev/Alikel-Linkgen.git
 
 # Install dependencies
 npm install
 
-# Launch dev server
+# Start development server
 npm run dev
 ```
 
-## 🌍 Connect
+## Project Structure
 
-[![Technical Blog](https://img.shields.io/badge/Technical_Blog-2962FF?style=for-the-badge&logo=hashnode&logoColor=white)](https://aliceleiserblog.netlify.app/)
-[![X (Twitter)](https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white)](https://twitter.com/AliLeisR)
+```
+src/
+├── components/
+│   ├── features/
+│   │   └── linkGenerator/     # Core link generation components
+│   └── common/               # Shared components
+├── contexts/
+│   └── RoleContext.jsx       # Role-based functionality management
+├── utils/
+│   └── linkUtils/            # Link generation utilities by role
+└── pages/                    # Main application pages
+```
 
-"Great tools are never finished - only iterated" - @AliKelDev
+## Usage Notes
 
-<sub>🔍 Developed by Jordan.M under the Alice Leiser alias</sub>
+- Requires an active LinkedIn Sales Navigator account
+- Generated links are optimized for Sales Navigator's search parameters
+- Search patterns include multi-language keywords for broader reach
+- Company size buckets are based on development and security team sizes
+
+## Prerequisites
+
+- Node.js 18+
+- npm/yarn
+- LinkedIn Sales Navigator account
+
+## What's Next
+
+Planned improvements include:
+- Integration with EXA API for enhanced capabilities:
+  - Advanced domain validation
+  - Direct people search functionality (potentially eliminating the need for Sales Navigator)
+  - Additional features to be explored based on API capabilities
+- Role-specific AI assistants:
+  - Dedicated chatbots for recruiters and job seekers (expanding beyond Kei's current sales team focus)
+- General improvements to user experience and functionality
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
