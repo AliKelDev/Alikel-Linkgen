@@ -9,6 +9,7 @@ import { generateLinks as generateSalesLinks } from '../../../utils/linkUtils/sa
 import { generateLinks as generateRecruiterLinks } from '../../../utils/linkUtils/recruiter';
 import { generateLinks as generateJobSeekerLinks } from '../../../utils/linkUtils/jobseeker';
 import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import OpenAllLinksButton from './OpenAllLinksButton';
 
 const PRIORITY_DOMAINS = ['.com', '.fr', '.es', '.it'];
 const SECONDARY_DOMAINS = [
@@ -184,35 +185,55 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                         <AnimatePresence mode="wait">
                             {generatedLinks.length > 0 && (
                                 <motion.div
-                                    className="mt-8 md:mt-12 space-y-6 md:space-y-8"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                >
-                                    {generatedLinks
-                                        .filter(linkData => linkData.role === currentRole)
-                                        .map((linkData) => (
-                                            <GeneratedLinkCard
-                                                key={linkData.id}
-                                                linkData={linkData}
-                                                onUpdateLink={(updatedLink) => {
-                                                    setGeneratedLinks(prev =>
-                                                        prev.map(link => 
-                                                            link.id === updatedLink.id ? updatedLink : link
-                                                        )
-                                                    );
-                                                }}
-                                                showBucketSelector={showBucketSelector}
-                                                isExpanded={expandedCard === linkData.id}
-                                                onToggleExpand={() => {
-                                                    setExpandedCard(
-                                                        expandedCard === linkData.id ? null : linkData.id
-                                                    );
-                                                }}
-                                                isMobile={isMobile}
-                                            />
-                                        ))}
-                                </motion.div>
+                                className="mt-8 md:mt-12 space-y-6 md:space-y-8"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                            >
+                                {/* Open All Links Buttons */}
+                                <div className="mb-4 flex flex-wrap gap-2">
+                                    <OpenAllLinksButton 
+                                        generatedLinks={generatedLinks.filter(linkData => linkData.role === currentRole)} 
+                                        linkType="dev" 
+                                        label="Dev Search" 
+                                    />
+                                    <OpenAllLinksButton 
+                                        generatedLinks={generatedLinks.filter(linkData => linkData.role === currentRole)} 
+                                        linkType="securityIAM" 
+                                        label="Security/IAM" 
+                                    />
+                                    <OpenAllLinksButton 
+                                        generatedLinks={generatedLinks.filter(linkData => linkData.role === currentRole)} 
+                                        linkType="finance" 
+                                        label="Finance" 
+                                    />
+                                </div>
+                                
+                                {/* Individual Link Cards */}
+                                {generatedLinks
+                                    .filter(linkData => linkData.role === currentRole)
+                                    .map((linkData) => (
+                                        <GeneratedLinkCard
+                                            key={linkData.id}
+                                            linkData={linkData}
+                                            onUpdateLink={(updatedLink) => {
+                                                setGeneratedLinks(prev =>
+                                                    prev.map(link => 
+                                                        link.id === updatedLink.id ? updatedLink : link
+                                                    )
+                                                );
+                                            }}
+                                            showBucketSelector={showBucketSelector}
+                                            isExpanded={expandedCard === linkData.id}
+                                            onToggleExpand={() => {
+                                                setExpandedCard(
+                                                    expandedCard === linkData.id ? null : linkData.id
+                                                );
+                                            }}
+                                            isMobile={isMobile}
+                                        />
+                                    ))}
+                            </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
