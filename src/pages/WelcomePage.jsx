@@ -104,7 +104,7 @@ const WelcomePage = () => {
             </h2>
             <p className="text-lg text-blue-600 mb-8">
               Business professional / Founder at <a href="https://webpixelle3.netlify.app/" className="text-blue-700 hover:text-blue-800 underline">Pixelle3</a> | 
-              Crafting High-Performance Automation Solutions
+              Crafting High-Performance Solutions
             </p>
           </div>
         </div>
