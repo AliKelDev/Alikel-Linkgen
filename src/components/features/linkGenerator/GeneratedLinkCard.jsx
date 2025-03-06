@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { Copy, Check, ExternalLink, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import DomainList from './DomainList';
 import BucketSelector from '../../../components/BucketSelector';
 import { generateLinks } from '../../../components/linkUtils';
-import AIChatAssistant from './AIChatAssistant';
+import { useChatAssistant } from '../../AnimatedBackground';
 
 const GeneratedLinkCard = ({ 
     linkData, 
@@ -16,7 +16,9 @@ const GeneratedLinkCard = ({
 }) => {
     const [copiedStates, setCopiedStates] = useState({});
     const [selectedCompany, setSelectedCompany] = useState(linkData);
-    const [showChat, setShowChat] = useState(false);
+    
+    // Use the global chat context instead of local state
+    const { openChat } = useChatAssistant();
 
     const handleDomainSelect = (domain) => {
         const updatedLink = {
@@ -50,6 +52,15 @@ const GeneratedLinkCard = ({
             console.error('Failed to copy:', err);
         }
     };
+    
+    // Open the global chat assistant with context about this company
+    const handleOpenChat = () => {
+        openChat(
+            selectedCompany.company, 
+            selectedCompany.selectedDomain,
+            { company: selectedCompany.company, domain: selectedCompany.selectedDomain }
+        );
+    };
 
     return (
         <motion.div 
@@ -72,23 +83,37 @@ const GeneratedLinkCard = ({
                         )}
                     </div>
                     
-                    {isMobile && (
-                        <button
-                            onClick={onToggleExpand}
-                            className="inline-flex items-center justify-center p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors w-full md:w-auto"
-                            aria-expanded={isExpanded}
+                    <div className="flex items-center gap-2">
+                        {/* Ask AI Button */}
+                        <motion.button
+                            onClick={handleOpenChat}
+                            className="inline-flex items-center justify-center gap-2 p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            aria-label="Ask Kei about this company"
                         >
-                            {isExpanded ? (
-                                <span className="flex items-center gap-2">
-                                    Show Less <ChevronUp className="w-4 h-4" />
-                                </span>
-                            ) : (
-                                <span className="flex items-center gap-2">
-                                    Show More <ChevronDown className="w-4 h-4" />
-                                </span>
-                            )}
-                        </button>
-                    )}
+                            <MessageSquare className="w-4 h-4" />
+                            <span className="text-sm font-medium">Ask Kei</span>
+                        </motion.button>
+                        
+                        {isMobile && (
+                            <button
+                                onClick={onToggleExpand}
+                                className="inline-flex items-center justify-center p-2.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                aria-expanded={isExpanded}
+                            >
+                                {isExpanded ? (
+                                    <span className="flex items-center gap-1">
+                                        <ChevronUp className="w-4 h-4" />
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-1">
+                                        <ChevronDown className="w-4 h-4" />
+                                    </span>
+                                )}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <AnimatePresence>
@@ -188,35 +213,6 @@ const GeneratedLinkCard = ({
                                         </motion.button>
                                     </div>
                                 ))}
-                            </div>
-
-                            {/* AI Chat Assistant */}
-                            <div className="mt-6">
-                                <motion.button
-                                    onClick={() => setShowChat(!showChat)}
-                                    className="w-full p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
-                                             transition-colors flex items-center justify-center gap-2"
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    {showChat ? 'Hide AI Assistant' : 'Show AI Assistant'}
-                                </motion.button>
-
-                                <AnimatePresence>
-                                    {showChat && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            transition={{ duration: 0.2 }}
-                                        >
-                                            <AIChatAssistant
-                                                company={selectedCompany.company}
-                                                domain={selectedCompany.selectedDomain}
-                                                companies={[selectedCompany.company]}
-                                            />
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
                             </div>
                         </motion.div>
                     )}
