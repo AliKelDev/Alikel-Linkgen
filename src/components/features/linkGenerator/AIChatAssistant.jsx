@@ -499,19 +499,29 @@ const AIChatAssistant = ({
                                     message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white shadow-sm border border-gray-100'}
                                 `}>
                                     <div className="whitespace-pre-wrap">
-                                        {message.content.split(/(\*\*.*?\*\*|_.*?_)/g).map((part, index) =>
-                                            part.startsWith('**') && part.endsWith('**') ? (
-                                                <strong key={index} className={`font-semibold ${message.type === 'user' ? 'text-blue-100' : 'text-blue-700'}`}>
-                                                    {part.slice(2, -2)}
-                                                </strong>
-                                            ) : part.startsWith('_') && part.endsWith('_') ? (
-                                                <em key={index} className={`text-xs ${message.type === 'user' ? 'text-blue-200' : 'text-gray-500'}`}>
-                                                    {part.slice(1, -1)}
-                                                </em>
-                                            ) : (
-                                                <span key={index}>{part}</span>
-                                            )
-                                        )}
+                                        {message.content.split(/(\*\*.*?\*\*|\*.*?\*|_.*?_)/g).map((part, index) => {
+                                            if (part.startsWith('**') && part.endsWith('**')) {
+                                                return (
+                                                    <strong key={index} className={`font-semibold ${message.type === 'user' ? 'text-blue-100' : 'text-blue-700'}`}>
+                                                        {part.slice(2, -2)}
+                                                    </strong>
+                                                );
+                                            } else if (part.startsWith('*') && part.endsWith('*')) {
+                                                return (
+                                                    <strong key={index} className={`font-semibold ${message.type === 'user' ? 'text-blue-100' : 'text-blue-700'}`}>
+                                                        {part.slice(1, -1)}
+                                                    </strong>
+                                                );
+                                            } else if (part.startsWith('_') && part.endsWith('_')) {
+                                                return (
+                                                    <em key={index} className={`text-xs ${message.type === 'user' ? 'text-blue-200' : 'text-gray-500'}`}>
+                                                        {part.slice(1, -1)}
+                                                    </em>
+                                                );
+                                            } else {
+                                                return <span key={index}>{part}</span>;
+                                            }
+                                        })}
                                     </div>
                                 </div>
                             </div>
