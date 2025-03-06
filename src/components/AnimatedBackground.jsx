@@ -6,6 +6,7 @@ import WelcomePage from '../pages/WelcomePage';
 import RoleSelector from './common/RoleSelector';
 import { Bot, X, Menu, Bell, Search, MessageSquare, Maximize2, Minimize2, Send, ChevronRight, ChevronDown } from 'lucide-react';
 import AIChatAssistant from './features/linkGenerator/AIChatAssistant';
+import ChatHistoryDropdown from './features/linkGenerator/ChatHistoryDropdown';
 
 // Create a context for the chat assistant
 export const ChatContext = createContext(null);
@@ -34,6 +35,11 @@ const AnimatedBackground = () => {
     const [currentCompany, setCurrentCompany] = useState(null);
     const [currentDomain, setCurrentDomain] = useState(null);
     const [showChatSuggestions, setShowChatSuggestions] = useState(true);
+    const [showChatHistory, setShowChatHistory] = useState(false);
+    const [chatCompanyList, setChatCompanyList] = useState(() => {
+        const storedList = localStorage.getItem('chatCompanyList');
+        return storedList ? JSON.parse(storedList) : [];
+    });
     
     const location = useLocation();
     const sidebarRef = useRef(null);
@@ -58,6 +64,11 @@ const AnimatedBackground = () => {
     useEffect(() => {
         localStorage.setItem('notifications', JSON.stringify(notifications));
     }, [notifications]);
+
+    // Persist chat company list
+    useEffect(() => {
+        localStorage.setItem('chatCompanyList', JSON.stringify(chatCompanyList));
+    }, [chatCompanyList]);
 
     // Track mobile state
     useEffect(() => {
@@ -146,10 +157,36 @@ const AnimatedBackground = () => {
     
     // Chat Assistant Functions
     const openChat = (company = null, domain = null, context = null) => {
+        // If company is provided, set as current and add to history
         if (company) {
             setCurrentCompany(company);
             setCurrentDomain(domain || null);
             localStorage.setItem('lastChatCompany', company);
+            
+            // Update company list for history
+            const currentTimestamp = new Date().toISOString();
+            const existingCompanyIndex = chatCompanyList.findIndex(item => item.company === company);
+            
+            if (existingCompanyIndex >= 0) {
+                // Update existing company entry
+                const updatedList = [...chatCompanyList];
+                updatedList[existingCompanyIndex] = {
+                    ...updatedList[existingCompanyIndex],
+                    lastChat: currentTimestamp,
+                    domain: domain || updatedList[existingCompanyIndex].domain
+                };
+                setChatCompanyList(updatedList);
+            } else {
+                // Add new company entry
+                setChatCompanyList([
+                    {
+                        company,
+                        domain: domain || null,
+                        lastChat: currentTimestamp
+                    },
+                    ...chatCompanyList
+                ]);
+            }
             
             // Load previous chat history for this company if it exists
             const storedMessages = localStorage.getItem(`chatHistory_${company}`);
@@ -176,6 +213,7 @@ const AnimatedBackground = () => {
         
         setIsChatOpen(true);
         setShowHelp(false); // Hide the help tooltip when chat is opened
+        setShowChatHistory(false); // Hide chat history dropdown when opening a chat
     };
     
     const closeChat = () => {
@@ -187,11 +225,96 @@ const AnimatedBackground = () => {
         setIsChatFullscreen(!isChatFullscreen);
     };
     
+    const deleteConversation = (company) => {
+        // Remove the chat history from localStorage
+        localStorage.removeItem(`chatHistory_${company}`);
+        
+        // Update the company list
+        const updatedList = chatCompanyList.filter(item => item.company !== company);
+        setChatCompanyList(updatedList);
+        
+        // If deleting the current conversation, reset it
+        if (currentCompany === company) {
+            // Reset to welcome message
+            const newMessage = [{
+                id: Date.now(),
+                type: 'ai',
+                content: `**Hi! I'm Kei** 🦊 - LinkForge's AI Research Assistant\n\n` +
+                    `I can help you with:\n` +
+                    `• **Domain Validation** (priority TLDs, alternatives)\n` +
+                    `• **Outreach Planning** (key roles, messaging strategy)\n` +
+                    `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
+                    `Ask me anything about your target companies!`
+            }];
+            setMessages(newMessage);
+            updateChatMessages(newMessage);
+        }
+        
+        // If we're deleting the last chat company, clear it
+        if (localStorage.getItem('lastChatCompany') === company) {
+            localStorage.removeItem('lastChatCompany');
+        }
+        
+        // Close the chat history dropdown
+        setShowChatHistory(false);
+    };
+    
+    const startNewConversation = (company = null, domain = null) => {
+        // Clear current conversation
+        if (company) {
+            // Create new conversation with specified company
+            setCurrentCompany(company);
+            setCurrentDomain(domain || null);
+            localStorage.setItem('lastChatCompany', company);
+            
+            // Add to company list
+            const currentTimestamp = new Date().toISOString();
+            setChatCompanyList([
+                {
+                    company,
+                    domain: domain || null,
+                    lastChat: currentTimestamp
+                },
+                ...chatCompanyList.filter(item => item.company !== company)
+            ]);
+        } else {
+            // Clear company focus
+            setCurrentCompany(null);
+            setCurrentDomain(null);
+            localStorage.removeItem('lastChatCompany');
+        }
+        
+        // Reset to welcome message
+        const newMessage = [{
+            id: Date.now(),
+            type: 'ai',
+            content: `**Hi! I'm Kei** 🦊 - LinkForge's AI Research Assistant\n\n` +
+                `I can help you with:\n` +
+                `• **Domain Validation** (priority TLDs, alternatives)\n` +
+                `• **Outreach Planning** (key roles, messaging strategy)\n` +
+                `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
+                `Ask me anything about ${company || "your target companies"}!`
+        }];
+        setMessages(newMessage);
+        
+        // Save as a new conversation if company provided
+        if (company) {
+            localStorage.setItem(`chatHistory_${company}`, JSON.stringify(newMessage));
+        }
+        
+        setShowChatHistory(false);
+        setShowChatSuggestions(true);
+    };
+    
     const updateChatMessages = (newMessages) => {
         setMessages(newMessages);
         if (currentCompany) {
             localStorage.setItem(`chatHistory_${currentCompany}`, JSON.stringify(newMessages));
         }
+    };
+    
+    const toggleChatHistory = () => {
+        setShowChatHistory(!showChatHistory);
     };
 
     const unreadNotificationCount = notifications.filter(notification => !notification.read).length;
@@ -204,10 +327,15 @@ const AnimatedBackground = () => {
         currentCompany,
         currentDomain,
         context: chatContext,
+        chatHistory: chatCompanyList,
+        showHistory: showChatHistory,
         openChat,
         closeChat,
         toggleFullscreen: toggleChatFullscreen,
-        updateMessages: updateChatMessages
+        updateMessages: updateChatMessages,
+        deleteConversation,
+        startNewConversation,
+        toggleChatHistory
     };
 
     return (
@@ -434,6 +562,19 @@ const AnimatedBackground = () => {
                                 showSuggestions={showChatSuggestions}
                                 setShowSuggestions={setShowChatSuggestions}
                             />
+                            
+                            {/* Chat History Dropdown */}
+                            <AnimatePresence>
+                                {showChatHistory && (
+                                    <ChatHistoryDropdown 
+                                        chatHistory={chatCompanyList}
+                                        onSelectChat={(company, domain) => openChat(company, domain)}
+                                        onDeleteChat={deleteConversation}
+                                        onNewChat={startNewConversation}
+                                        currentCompany={currentCompany}
+                                    />
+                                )}
+                            </AnimatePresence>
                         </motion.div>
                     )}
                 </AnimatePresence>

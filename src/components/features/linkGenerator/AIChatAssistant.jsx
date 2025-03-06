@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, X, Send, Maximize2, Minimize2, Loader2, Settings, Check } from 'lucide-react';
+import { User, X, Send, Maximize2, Minimize2, Loader2, Settings, Check, Trash2, History, PlusCircle } from 'lucide-react';
+import { useChatAssistant } from '../../AnimatedBackground';
 
 const thinkingMessages = [
     "Let me ponder that...",
@@ -39,9 +40,19 @@ const AIChatAssistant = ({
     showSuggestions,
     setShowSuggestions
 }) => {
+    const { 
+        deleteConversation, 
+        startNewConversation,
+        toggleChatHistory,
+        showHistory
+    } = useChatAssistant();
     const [currentMessage, setCurrentMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showNewChatModal, setShowNewChatModal] = useState(false);
+    const [newChatCompany, setNewChatCompany] = useState('');
+    const [newChatDomain, setNewChatDomain] = useState('');
     const [professionalismLevel, setProfessionalismLevel] = useState(PROFESSIONALISM_LEVELS.BALANCED);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
@@ -145,6 +156,25 @@ const AIChatAssistant = ({
         e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
     };
 
+    const handleDeleteChat = () => {
+        if (company) {
+            deleteConversation(company);
+            setShowDeleteConfirm(false);
+        }
+    };
+    
+    const handleCreateNewChat = () => {
+        if (newChatCompany.trim()) {
+            startNewConversation(newChatCompany.trim(), newChatDomain.trim() || null);
+            setNewChatCompany('');
+            setNewChatDomain('');
+            setShowNewChatModal(false);
+        } else {
+            startNewConversation();
+            setShowNewChatModal(false);
+        }
+    };
+
     const getProfileModeColor = () => {
         switch(professionalismLevel) {
             case PROFESSIONALISM_LEVELS.HIGH:
@@ -227,6 +257,36 @@ const AIChatAssistant = ({
                 </div>
                 
                 <div className="flex items-center gap-2">
+                    {/* New Chat Button */}
+                    <button 
+                        onClick={() => setShowNewChatModal(true)}
+                        className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
+                        aria-label="New chat"
+                        title="New chat"
+                    >
+                        <PlusCircle className="w-5 h-5" />
+                    </button>
+                    
+                    {/* History Button */}
+                    <button 
+                        onClick={toggleChatHistory}
+                        className={`p-2 hover:bg-blue-500 rounded-lg transition-colors ${showHistory ? 'bg-blue-500' : ''}`}
+                        aria-label="Chat history"
+                        title="Chat history"
+                    >
+                        <History className="w-5 h-5" />
+                    </button>
+                    
+                    {/* Delete Button */}
+                    <button 
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
+                        aria-label="Delete conversation"
+                        title="Delete conversation"
+                    >
+                        <Trash2 className="w-5 h-5" />
+                    </button>
+                    
                     <button 
                         onClick={() => setShowSettings(!showSettings)}
                         className="p-2 hover:bg-blue-500 rounded-lg transition-colors relative"
@@ -316,6 +376,91 @@ const AIChatAssistant = ({
                                         : "Balanced mode provides helpful insights with moderate enthusiasm."
                                 }
                             </p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {/* Delete Confirmation Dialog */}
+            <AnimatePresence>
+                {showDeleteConfirm && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="border-b border-red-200 bg-red-50 overflow-hidden"
+                    >
+                        <div className="p-4">
+                            <h4 className="font-medium text-red-700 mb-2">Delete this conversation?</h4>
+                            <p className="text-sm text-red-600 mb-4">
+                                This action cannot be undone. All messages with {company || 'Kei'} will be permanently deleted.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteChat}
+                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
+                                >
+                                    Delete Conversation
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {/* New Chat Modal */}
+            <AnimatePresence>
+                {showNewChatModal && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="border-b border-blue-200 bg-white overflow-hidden"
+                    >
+                        <div className="p-4">
+                            <h4 className="font-medium text-blue-900 mb-3">Start a New Conversation</h4>
+                            <div className="space-y-3 mb-4">
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">Company Name (optional)</label>
+                                    <input
+                                        type="text"
+                                        value={newChatCompany}
+                                        onChange={(e) => setNewChatCompany(e.target.value)}
+                                        placeholder="e.g. Microsoft"
+                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-600 mb-1">Domain (optional)</label>
+                                    <input
+                                        type="text"
+                                        value={newChatDomain}
+                                        onChange={(e) => setNewChatDomain(e.target.value)}
+                                        placeholder="e.g. microsoft.com"
+                                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowNewChatModal(false)}
+                                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleCreateNewChat}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                                >
+                                    Start New Chat
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 )}
