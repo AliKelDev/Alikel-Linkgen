@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Wand2, Rocket, ClipboardList, Loader2, X, Send, Maximize2, Minimize2, MessageSquare } from 'lucide-react';
+import { User, X, Send, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 
 const thinkingMessages = [
     "Let me ponder that...",
@@ -15,27 +15,6 @@ const thinkingMessages = [
     "Searching my brain..."
 ];
 
-const chatSuggestions = [
-    {
-        id: 'domain-validation',
-        icon: Wand2,
-        title: 'Domain Validation',
-        prompt: 'Can you validate the best domain for this company?'
-    },
-    {
-        id: 'outreach-strategy',
-        icon: Rocket,
-        title: 'Outreach Strategy',
-        prompt: 'What would be a good outreach strategy for this company?'
-    },
-    {
-        id: 'tech-stack',
-        icon: ClipboardList,
-        title: 'Tech Stack Analysis',
-        prompt: 'Can you analyze what tech stack this company likely uses?'
-    }
-];
-
 const AIChatAssistant = ({ 
     isFullscreen, 
     toggleFullscreen, 
@@ -43,9 +22,7 @@ const AIChatAssistant = ({
     company, 
     domain, 
     messages, 
-    updateMessages,
-    showSuggestions,
-    setShowSuggestions
+    updateMessages
 }) => {
     const [currentMessage, setCurrentMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -108,6 +85,7 @@ const AIChatAssistant = ({
             }]);
 
         } catch (error) {
+            console.error("Chat error:", error);
             updateMessages([...updatedMessages, {
                 id: Date.now() + 1,
                 type: 'ai',
@@ -117,63 +95,6 @@ const AIChatAssistant = ({
         }
         
         setIsLoading(false);
-        // Hide suggestions after user interaction
-        setShowSuggestions(false);
-    };
-
-    const getAIAnalysis = async (type) => {
-        setIsLoading(true);
-        setShowSuggestions(false);
-        
-        const updatedMessages = [...messages, {
-            id: Date.now(),
-            type: 'user',
-            content: chatSuggestions.find(s => s.id === type)?.prompt || generateThinkingMessage(),
-            analysisType: type
-        }];
-        
-        updateMessages(updatedMessages);
-        
-        try {
-            const response = await fetch('/.netlify/functions/ai-chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    analysisType: type,
-                    company: company || 'unknown',
-                    messages: updatedMessages,
-                    domain: domain || 'unknown'
-                })
-            });
-
-            if (!response.ok) throw new Error('API request failed');
-
-            const data = await response.json();
-            const aiResponse = `${data.content}\n\n_— Kei @ LinkForge_`;
-
-            updateMessages([...updatedMessages, {
-                id: Date.now() + 1,
-                type: 'ai',
-                content: aiResponse,
-                analysisType: type
-            }]);
-
-        } catch (error) {
-            updateMessages([...updatedMessages, {
-                id: Date.now() + 1,
-                type: 'ai',
-                content: "⚠️ Hmm, I'm having trouble connecting to my servers. Please try again later!",
-                isError: true
-            }]);
-        }
-        
-        setIsLoading(false);
-    };
-
-    const handleSuggestionClick = (suggestionId) => {
-        getAIAnalysis(suggestionId);
     };
 
     const handleKeyDown = (e) => {
@@ -181,6 +102,14 @@ const AIChatAssistant = ({
             e.preventDefault();
             handleSendMessage();
         }
+    };
+
+    const handleTextareaChange = (e) => {
+        setCurrentMessage(e.target.value);
+        
+        // Auto-resize the textarea based on content
+        e.target.style.height = 'auto';
+        e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
     };
 
     return (
@@ -260,7 +189,7 @@ const AIChatAssistant = ({
                                     message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white shadow-sm border border-gray-100'}
                                 `}>
                                     <div className="whitespace-pre-wrap">
-                                        {message.content.split(/(\*\*.*?\*\*)/g).map((part, index) =>
+                                        {message.content.split(/(\*\*.*?\*\*|_.*?_)/g).map((part, index) =>
                                             part.startsWith('**') && part.endsWith('**') ? (
                                                 <strong key={index} className={`font-semibold ${message.type === 'user' ? 'text-blue-100' : 'text-blue-700'}`}>
                                                     {part.slice(2, -2)}
@@ -315,31 +244,6 @@ const AIChatAssistant = ({
                     
                     <div ref={messagesEndRef} />
                 </AnimatePresence>
-                
-                {/* Quick Suggestions */}
-                {showSuggestions && messages.length < 3 && !isLoading && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-4"
-                    >
-                        <p className="text-gray-500 text-xs mb-2">Ask Kei about {company || 'any company'}:</p>
-                        <div className="flex flex-wrap gap-2">
-                            {chatSuggestions.map((suggestion) => (
-                                <motion.button
-                                    key={suggestion.id}
-                                    onClick={() => handleSuggestionClick(suggestion.id)}
-                                    className="px-3 py-2 bg-white rounded-lg text-blue-700 text-sm flex items-center gap-2 shadow-sm hover:shadow-md border border-blue-100 hover:border-blue-300 transition-all"
-                                    whileHover={{ scale: 1.03 }}
-                                    whileTap={{ scale: 0.97 }}
-                                >
-                                    <suggestion.icon className="w-4 h-4" />
-                                    {suggestion.title}
-                                </motion.button>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
             </div>
             
             {/* Input Area */}
@@ -348,9 +252,9 @@ const AIChatAssistant = ({
                     <textarea
                         ref={inputRef}
                         value={currentMessage}
-                        onChange={(e) => setCurrentMessage(e.target.value)}
+                        onChange={handleTextareaChange}
                         onKeyDown={handleKeyDown}
-                        placeholder={`Ask Kei about ${company || 'any company'}...`}
+                        placeholder={`Ask Kei about ${company || 'anything'}...`}
                         className="flex-1 resize-none p-3 rounded-xl border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all min-h-[56px] max-h-32"
                         rows={1}
                     />
@@ -371,35 +275,6 @@ const AIChatAssistant = ({
                             <Send className="w-5 h-5" />
                         )}
                     </motion.button>
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex justify-center mt-3 gap-2">
-                    {!isLoading && (
-                        <>
-                            <button
-                                onClick={() => getAIAnalysis('domainValidation')}
-                                className="text-xs text-blue-700 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors flex items-center gap-1"
-                            >
-                                <Wand2 className="w-3 h-3" />
-                                Domain Check
-                            </button>
-                            <button
-                                onClick={() => getAIAnalysis('outreachStrategy')}
-                                className="text-xs text-blue-700 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors flex items-center gap-1"
-                            >
-                                <Rocket className="w-3 h-3" />
-                                Outreach Plan
-                            </button>
-                            <button
-                                onClick={() => getAIAnalysis('techStackPrediction')}
-                                className="text-xs text-blue-700 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors flex items-center gap-1"
-                            >
-                                <ClipboardList className="w-3 h-3" />
-                                Tech Stack
-                            </button>
-                        </>
-                    )}
                 </div>
             </div>
         </motion.div>
