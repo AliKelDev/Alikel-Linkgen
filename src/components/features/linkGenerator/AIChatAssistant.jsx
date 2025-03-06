@@ -372,12 +372,17 @@ const AIChatAssistant = ({
                             </div>
                         </motion.div>
                     ))}
-                    
+                </AnimatePresence>
+                
+                {/* Loading Animation - Fixed with separate AnimatePresence */}
+                <AnimatePresence mode="wait">
                     {isLoading && (
                         <motion.div
+                            key="loading-animation"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
                             className="flex items-start gap-3"
                         >
                             <div className="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-lg mt-1">
@@ -407,12 +412,12 @@ const AIChatAssistant = ({
                             </div>
                         </motion.div>
                     )}
-                    
-                    {/* Suggestions */}
-                    {renderSuggestions()}
-                    
-                    <div ref={messagesEndRef} />
                 </AnimatePresence>
+                
+                {/* Suggestions */}
+                {renderSuggestions()}
+                
+                <div ref={messagesEndRef} />
             </div>
             
             {/* Input Area */}
