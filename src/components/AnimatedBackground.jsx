@@ -564,17 +564,18 @@ const AnimatedBackground = () => {
                             />
                             
                             {/* Chat History Dropdown */}
-                            <AnimatePresence>
-                                {showChatHistory && (
-                                    <ChatHistoryDropdown 
-                                        chatHistory={chatCompanyList}
-                                        onSelectChat={(company, domain) => openChat(company, domain)}
-                                        onDeleteChat={deleteConversation}
-                                        onNewChat={startNewConversation}
-                                        currentCompany={currentCompany}
-                                    />
-                                )}
-                            </AnimatePresence>
+<AnimatePresence>
+    {showChatHistory && (
+        <ChatHistoryDropdown 
+            chatHistory={chatCompanyList}
+            onSelectChat={(company, domain) => openChat(company, domain)}
+            onDeleteChat={deleteConversation}
+            onNewChat={startNewConversation}
+            currentCompany={currentCompany}
+            isFullscreen={isChatFullscreen}
+        />
+    )}
+</AnimatePresence>
                         </motion.div>
                     )}
                 </AnimatePresence>

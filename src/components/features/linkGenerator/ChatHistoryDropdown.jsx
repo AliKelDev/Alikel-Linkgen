@@ -7,7 +7,8 @@ const ChatHistoryDropdown = ({
     onSelectChat, 
     onDeleteChat, 
     onNewChat,
-    currentCompany
+    currentCompany,
+    isFullscreen = false
 }) => {
     // Format timestamp to readable date
     const formatDate = (timestamp) => {
@@ -41,7 +42,12 @@ const ChatHistoryDropdown = ({
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute right-0 bottom-full mb-2 w-80 max-h-96 overflow-y-auto bg-white rounded-xl shadow-xl"
+            className={`
+                bg-white rounded-xl shadow-xl overflow-y-auto
+                ${isFullscreen 
+                    ? 'absolute top-16 right-4 z-50 w-80 max-h-[calc(100vh-8rem)]' 
+                    : 'absolute right-0 bottom-full mb-2 w-80 max-h-96'}
+            `}
         >
             <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                 <div className="flex items-center gap-2">
