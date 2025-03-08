@@ -7,7 +7,7 @@ const WelcomePage = () => {
     {
       icon: Briefcase,
       label: "Web Agency",
-      url: "https://webpixelle3.netlify.app/",
+      url: "https://pixelle3-alikearn.com/",
     },
     {
       icon: Linkedin,
@@ -54,10 +54,10 @@ const WelcomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-28">
           <div className="text-center">
             <h1 className="text-5xl md:text-6xl font-bold text-blue-900 mb-6">
-              Alikel Linkgen
+              Alikel Linkforge
             </h1>
             <p className="text-xl md:text-2xl text-blue-600 mb-8 max-w-2xl mx-auto">
-              Enterprise-grade LinkedIn automation for technical recruitment and sales outreach
+              LinkedIn link generator for technical recruitment and sales outreach
             </p>
             
             <div className="flex justify-center">
@@ -103,7 +103,7 @@ const WelcomePage = () => {
               Built by <a href="https://github.com/AliKelDev" target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:text-blue-800 underline">AliKelDev</a>
             </h2>
             <p className="text-lg text-blue-600 mb-8">
-              Business professional / Founder at <a href="https://webpixelle3.netlify.app/" className="text-blue-700 hover:text-blue-800 underline">Pixelle3</a> | 
+              Business professional / Founder at <a href="https://pixelle3-alikearn.com/" className="text-blue-700 hover:text-blue-800 underline">Pixelle3</a> | 
               Crafting High-Performance Solutions
             </p>
           </div>
