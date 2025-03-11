@@ -721,5 +721,5 @@ const DomainCheckerModal = ({ company, isOpen, onClose }) => {
     </AnimatePresence>
   );
 };
-
+// new commit 
 export default DomainCheckerModal;
