@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, ExternalLink, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { Copy, Check, ExternalLink, ChevronDown, ChevronUp, MessageSquare, Globe } from 'lucide-react';
 import DomainList from './DomainList';
 import BucketSelector from '../../../components/BucketSelector';
 import { generateLinks } from '../../../components/linkUtils';
 import { useChatAssistant } from '../../AnimatedBackground';
+import DomainCheckerModal from './DomainCheckerModal';
 
 const GeneratedLinkCard = ({ 
     linkData, 
@@ -16,6 +17,7 @@ const GeneratedLinkCard = ({
 }) => {
     const [copiedStates, setCopiedStates] = useState({});
     const [selectedCompany, setSelectedCompany] = useState(linkData);
+    const [showDomainChecker, setShowDomainChecker] = useState(false);
     
     // Use the global chat context instead of local state
     const { openChat } = useChatAssistant();
@@ -84,6 +86,18 @@ const GeneratedLinkCard = ({
                     </div>
                     
                     <div className="flex items-center gap-2">
+                        {/* Check Domains Button */}
+                        <motion.button
+                            onClick={() => setShowDomainChecker(true)}
+                            className="inline-flex items-center justify-center gap-2 p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            aria-label="Check domains for this company"
+                        >
+                            <Globe className="w-4 h-4" />
+                            <span className="text-sm font-medium">Check Domains</span>
+                        </motion.button>
+                        
                         {/* Ask AI Button */}
                         <motion.button
                             onClick={handleOpenChat}
@@ -218,6 +232,13 @@ const GeneratedLinkCard = ({
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* Domain Checker Modal */}
+            <DomainCheckerModal 
+                company={selectedCompany.company}
+                isOpen={showDomainChecker}
+                onClose={() => setShowDomainChecker(false)}
+            />
         </motion.div>
     );
 };
