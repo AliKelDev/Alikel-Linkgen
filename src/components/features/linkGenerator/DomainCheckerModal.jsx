@@ -1,10 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink, AlertCircle, X, Copy, CheckCheck, Loader2, Globe } from 'lucide-react';
+import { ExternalLink, AlertCircle, X, Copy, CheckCheck, Loader2, Globe, Download, Check, XIcon } from 'lucide-react';
 
 const DomainCheckerModal = ({ company, isOpen, onClose }) => {
   const [selectedDomains, setSelectedDomains] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [openingDomains, setOpeningDomains] = useState(false);
+  const [currentDomainIndex, setCurrentDomainIndex] = useState(0);
+  const [openDelay, setOpenDelay] = useState(2); // Default 2 seconds delay
+  const [domainStatus, setDomainStatus] = useState({}); // Track domain existence status
+  const [popupWarningDismissed, setPopupWarningDismissed] = useState(false);
+  const [showDomainFilter, setShowDomainFilter] = useState('all'); // 'all', 'exists', 'not-exists', 'unknown'
   const modalRef = useRef(null);
 
   // Common TLDs to check
@@ -43,11 +49,22 @@ const DomainCheckerModal = ({ company, isOpen, onClose }) => {
       const domainName = `${cleanCompanyName}${tld}`;
       return {
         domain: domainName,
-        link: `https://www.google.com/search?q=site%3A${domainName}`
+        link: `https://www.google.com/search?q=site%3A${domainName}`,
+        opened: false
       };
     });
     
+    // Initialize domain status for new domains
+    const initialStatus = {};
+    domains.forEach(domain => {
+      // Preserve existing status if available
+      initialStatus[domain.domain] = domainStatus[domain.domain] || 'unknown';
+    });
+    
+    setDomainStatus(initialStatus);
     setSelectedDomains(domains);
+    setCurrentDomainIndex(0);
+    setOpeningDomains(false);
   };
 
   const handleCopyAllDomains = () => {
@@ -65,516 +82,111 @@ const DomainCheckerModal = ({ company, isOpen, onClose }) => {
       });
   };
 
-  // Open a single domain search
-  const handleOpenSingle = (url) => {
+  // This function opens a single domain search
+  const handleOpenSingle = (url, index) => {
     window.open(url, '_blank', 'noopener,noreferrer');
+    
+    // Mark this domain as opened
+    if (index !== undefined) {
+      const updatedDomains = [...selectedDomains];
+      updatedDomains[index] = { ...updatedDomains[index], opened: true };
+      setSelectedDomains(updatedDomains);
+    }
   };
 
-  // Open batch domain researcher
-  const openBatchDomainResearcher = () => {
-    // Clean company name for domain use
-    const cleanCompanyName = company
-      .toLowerCase()
-      .replace(/,?\s*(inc|llc|ltd|corp|corporation|company)\.?$/i, '')
-      .replace(/[^a-z0-9]/g, '')
-      .trim();
+  // Rate-limited domain opening process
+  const startRateLimitedOpening = () => {
+    setOpeningDomains(true);
+    setCurrentDomainIndex(0);
     
-    // Generate the HTML for our custom researcher page
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Domain Research: ${company}</title>
-  <style>
-    :root {
-      --blue-50: #eff6ff;
-      --blue-100: #dbeafe;
-      --blue-200: #bfdbfe;
-      --blue-500: #3b82f6;
-      --blue-600: #2563eb;
-      --blue-700: #1d4ed8;
-      --blue-900: #1e3a8a;
-      --green-100: #dcfce7;
-      --green-500: #22c55e;
-      --green-600: #16a34a;
-      --yellow-50: #fefce8;
-      --yellow-100: #fef9c3;
-      --yellow-600: #ca8a04;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-300: #d1d5db;
-      --gray-500: #6b7280;
-      --gray-600: #4b5563;
-      --gray-700: #374151;
-      --red-100: #fee2e2;
-      --red-500: #ef4444;
-      --red-600: #dc2626;
-    }
+    // Reset all domains to "unopened" state
+    const resetDomains = selectedDomains.map(domain => ({
+      ...domain,
+      opened: false
+    }));
+    setSelectedDomains(resetDomains);
     
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      line-height: 1.5;
-      color: var(--gray-700);
-      background-color: var(--blue-50);
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-    
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--blue-200);
-    }
-    
-    h1 {
-      color: var(--blue-900);
-      font-size: 1.5rem;
-    }
-    
-    .domains-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .domain-card {
-      background-color: white;
-      border-radius: 0.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      padding: 1rem;
-      border: 1px solid var(--gray-200);
-      transition: all 0.2s ease;
-    }
-    
-    .domain-card:hover {
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    }
-    
-    .domain-name {
-      font-weight: 600;
-      color: var(--blue-700);
-      margin-bottom: 0.5rem;
-      font-size: 1.125rem;
-    }
-    
-    .domain-url {
-      color: var(--gray-500);
-      font-size: 0.875rem;
-      margin-bottom: 1rem;
-      word-break: break-all;
-    }
-    
-    .actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-    
-    button {
-      cursor: pointer;
-      border: none;
-      border-radius: 0.25rem;
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: background-color 0.2s ease;
-    }
-    
-    .btn-search {
-      background-color: var(--blue-500);
-      color: white;
-    }
-    
-    .btn-search:hover {
-      background-color: var(--blue-600);
-    }
-    
-    .btn-mark {
-      background-color: var(--gray-100);
-      color: var(--gray-700);
-    }
-    
-    .btn-mark:hover {
-      background-color: var(--gray-200);
-    }
-    
-    .domain-card.available {
-      background-color: var(--green-100);
-      border-color: var(--green-500);
-    }
-    
-    .domain-card.taken {
-      background-color: var(--red-100);
-      border-color: var(--red-500);
-    }
-    
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    
-    .status-badge.available {
-      background-color: var(--green-500);
-      color: white;
-    }
-    
-    .status-badge.taken {
-      background-color: var(--red-500);
-      color: white;
-    }
-    
-    .status-badge.unknown {
-      background-color: var(--gray-300);
-      color: var(--gray-700);
-    }
-    
-    .info-alert {
-      background-color: var(--yellow-50);
-      border: 1px solid var(--yellow-100);
-      border-radius: 0.5rem;
-      padding: 1rem;
-      margin-bottom: 2rem;
-      color: var(--yellow-600);
-    }
-    
-    .batch-actions {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .auto-open-section {
-      margin-bottom: 1.5rem;
-      padding: 1rem;
-      background-color: white;
-      border-radius: 0.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    
-    .auto-open-controls {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 0.5rem;
-    }
-    
-    progress {
-      width: 100%;
-      height: 0.5rem;
-      margin-top: 0.5rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Domain Research: ${company}</h1>
-      <div id="summary">
-        <span id="checked-count">0</span>/${selectedDomains.length} domains checked
-      </div>
-    </header>
-    
-    <div class="info-alert">
-      <strong>Note:</strong> Make sure pop-ups are allowed in your browser for this tool to work properly.
-      This tool will help you research domains systematically without juggling multiple tabs.
-    </div>
-    
-    <div class="auto-open-section">
-      <h2>Batch Search Options</h2>
-      <div class="auto-open-controls">
-        <select id="delay-select" class="btn-mark">
-          <option value="0.1">0.1 second delay</option>
-          <option value="0.5">0.5 second delay</option>
-          <option value="1">1 second delay</option>
-          <option value="2" selected>2 seconds delay</option>
-        </select>
-        <button id="start-auto-search" class="btn-search">Start Auto-Search</button>
-        <button id="stop-auto-search" class="btn-mark" disabled>Stop</button>
-      </div>
-      <div id="progress-container" style="display: none; margin-top: 0.5rem;">
-        <div>Searching: <span id="current-domain"></span> (<span id="progress-count">0</span>/${selectedDomains.length})</div>
-        <progress id="progress-bar" value="0" max="${selectedDomains.length}"></progress>
-      </div>
-    </div>
-    
-    <div class="batch-actions">
-      <button id="btn-reset" class="btn-mark">Reset All Status</button>
-      <button id="btn-export" class="btn-mark">Export Results</button>
-    </div>
-    
-    <div class="domains-grid">
-      ${selectedDomains.map((domain, index) => `
-        <div class="domain-card" id="domain-${index}" data-domain="${domain.domain}" data-search-url="${domain.link}">
-          <div class="status-badge unknown">Unknown</div>
-          <div class="domain-name">${domain.domain}</div>
-          <div class="domain-url">http://${domain.domain}</div>
-          <div class="actions">
-            <button class="btn-search" onclick="openSearch(${index})">Search</button>
-            <button class="btn-mark" onclick="markAvailable(${index})">Available</button>
-            <button class="btn-mark" onclick="markTaken(${index})">Taken</button>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  </div>
-  
-  <script>
-    // Domain data
-    const domains = ${JSON.stringify(selectedDomains)};
-    let checkedCount = 0;
-    let isAutoSearching = false;
-    let currentSearchIndex = 0;
-    let searchInterval;
-    
-    // Open Google search for a domain
-    function openSearch(index) {
-      const card = document.getElementById('domain-' + index);
-      const searchUrl = card.dataset.searchUrl;
-      window.open(searchUrl, '_blank');
-    }
-    
-    // Mark a domain as available
-    function markAvailable(index) {
-      const card = document.getElementById('domain-' + index);
-      
-      // If it wasn't already marked as something, increment the counter
-      if (!card.classList.contains('available') && !card.classList.contains('taken')) {
-        checkedCount++;
-        document.getElementById('checked-count').textContent = checkedCount;
-      }
-      
-      // Update styling
-      card.classList.remove('taken');
-      card.classList.add('available');
-      card.querySelector('.status-badge').textContent = 'Available';
-      card.querySelector('.status-badge').classList.remove('unknown', 'taken');
-      card.querySelector('.status-badge').classList.add('available');
-      
-      // Save to localStorage
-      saveDomainsStatus();
-    }
-    
-    // Mark a domain as taken
-    function markTaken(index) {
-      const card = document.getElementById('domain-' + index);
-      
-      // If it wasn't already marked as something, increment the counter
-      if (!card.classList.contains('available') && !card.classList.contains('taken')) {
-        checkedCount++;
-        document.getElementById('checked-count').textContent = checkedCount;
-      }
-      
-      // Update styling
-      card.classList.remove('available');
-      card.classList.add('taken');
-      card.querySelector('.status-badge').textContent = 'Taken';
-      card.querySelector('.status-badge').classList.remove('unknown', 'available');
-      card.querySelector('.status-badge').classList.add('taken');
-      
-      // Save to localStorage
-      saveDomainsStatus();
-    }
-    
-    // Save domain status to localStorage
-    function saveDomainsStatus() {
-      const domainStatus = {};
-      
-      document.querySelectorAll('.domain-card').forEach(card => {
-        const domain = card.dataset.domain;
-        let status = 'unknown';
-        
-        if (card.classList.contains('available')) {
-          status = 'available';
-        } else if (card.classList.contains('taken')) {
-          status = 'taken';
-        }
-        
-        domainStatus[domain] = status;
-      });
-      
-      localStorage.setItem('domainStatus_${cleanCompanyName}', JSON.stringify(domainStatus));
-    }
-    
-    // Load domain status from localStorage
-    function loadDomainsStatus() {
-      const saved = localStorage.getItem('domainStatus_${cleanCompanyName}');
-      if (!saved) return;
-      
-      try {
-        const domainStatus = JSON.parse(saved);
-        let count = 0;
-        
-        document.querySelectorAll('.domain-card').forEach(card => {
-          const domain = card.dataset.domain;
-          if (domain in domainStatus) {
-            const status = domainStatus[domain];
-            
-            if (status === 'available') {
-              card.classList.add('available');
-              card.querySelector('.status-badge').textContent = 'Available';
-              card.querySelector('.status-badge').classList.add('available');
-              card.querySelector('.status-badge').classList.remove('unknown');
-              count++;
-            } else if (status === 'taken') {
-              card.classList.add('taken');
-              card.querySelector('.status-badge').textContent = 'Taken';
-              card.querySelector('.status-badge').classList.add('taken');
-              card.querySelector('.status-badge').classList.remove('unknown');
-              count++;
-            }
-          }
-        });
-        
-        checkedCount = count;
-        document.getElementById('checked-count').textContent = count;
-      } catch (e) {
-        console.error('Error loading domain status:', e);
-      }
-    }
-    
-    // Start auto search process
-    function startAutoSearch() {
-      if (isAutoSearching) return;
-      
-      const delaySelect = document.getElementById('delay-select');
-      const delay = parseFloat(delaySelect.value) * 1000; // Convert to milliseconds
-      
-      isAutoSearching = true;
-      currentSearchIndex = 0;
-      
-      // Update UI
-      document.getElementById('start-auto-search').disabled = true;
-      document.getElementById('stop-auto-search').disabled = false;
-      document.getElementById('progress-container').style.display = 'block';
-      document.getElementById('progress-count').textContent = 0;
-      document.getElementById('progress-bar').value = 0;
-      
-      // Start the search process
-      searchNext(delay);
-    }
-    
-    // Search next domain
-    function searchNext(delay) {
-      if (!isAutoSearching || currentSearchIndex >= domains.length) {
-        stopAutoSearch();
-        return;
-      }
-      
-      // Update progress
-      document.getElementById('current-domain').textContent = domains[currentSearchIndex].domain;
-      document.getElementById('progress-count').textContent = currentSearchIndex + 1;
-      document.getElementById('progress-bar').value = currentSearchIndex + 1;
-      
-      // Open search
-      openSearch(currentSearchIndex);
-      
-      // Schedule next search
-      currentSearchIndex++;
-      if (currentSearchIndex < domains.length) {
-        setTimeout(() => searchNext(delay), delay);
-      } else {
-        stopAutoSearch();
-      }
-    }
-    
-    // Stop auto search
-    function stopAutoSearch() {
-      isAutoSearching = false;
-      document.getElementById('start-auto-search').disabled = false;
-      document.getElementById('stop-auto-search').disabled = true;
-    }
-    
-    // Export results
-    function exportResults() {
-      const results = {
-        company: '${company}',
-        date: new Date().toISOString().split('T')[0],
-        domains: []
-      };
-      
-      document.querySelectorAll('.domain-card').forEach(card => {
-        const domain = card.dataset.domain;
-        let status = 'unknown';
-        
-        if (card.classList.contains('available')) {
-          status = 'available';
-        } else if (card.classList.contains('taken')) {
-          status = 'taken';
-        }
-        
-        results.domains.push({
-          domain,
-          status
-        });
-      });
-      
-      // Create downloadable file
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(results, null, 2));
-      const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", "${cleanCompanyName}_domain_results.json");
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
-    }
-    
-    // Event Listeners
-    document.getElementById('start-auto-search').addEventListener('click', startAutoSearch);
-    document.getElementById('stop-auto-search').addEventListener('click', stopAutoSearch);
-    document.getElementById('btn-export').addEventListener('click', exportResults);
-    
-    // Reset all domains
-    document.getElementById('btn-reset').addEventListener('click', function() {
-      document.querySelectorAll('.domain-card').forEach(card => {
-        card.classList.remove('available', 'taken');
-        card.querySelector('.status-badge').textContent = 'Unknown';
-        card.querySelector('.status-badge').classList.remove('available', 'taken');
-        card.querySelector('.status-badge').classList.add('unknown');
-      });
-      
-      checkedCount = 0;
-      document.getElementById('checked-count').textContent = '0';
-      
-      localStorage.removeItem('domainStatus_${cleanCompanyName}');
-    });
-    
-    // Initialize
-    loadDomainsStatus();
-  </script>
-</body>
-</html>
-    `;
-    
-    // Create a blob from our HTML
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    
-    // Open in a new tab
-    window.open(url, '_blank');
-    
-    // Clean up the URL object
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // Start the opening process for the first domain
+    openNextDomain(0, resetDomains);
   };
+  
+  // Recursive function to open domains with delay
+  const openNextDomain = (index, domains) => {
+    if (index >= domains.length) {
+      // All domains opened
+      setOpeningDomains(false);
+      return;
+    }
+    
+    // Open current domain
+    handleOpenSingle(domains[index].link, index);
+    setCurrentDomainIndex(index);
+    
+    // Schedule next domain opening
+    setTimeout(() => {
+      openNextDomain(index + 1, domains);
+    }, openDelay * 1000); // Convert seconds to milliseconds
+  };
+
+  // Handle domain status toggle
+  const handleDomainStatusChange = (domain, status) => {
+    setDomainStatus(prev => ({
+      ...prev,
+      [domain]: status
+    }));
+  };
+
+  // Export domain results as CSV
+  const exportToCSV = () => {
+    const csvContent = [
+      // CSV Header
+      ['Domain', 'Status', 'Google Search URL'].join(','),
+      // CSV Rows
+      ...selectedDomains.map(item => 
+        [
+          item.domain,
+          domainStatus[item.domain] || 'unknown',
+          item.link
+        ].join(',')
+      )
+    ].join('\n');
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${company.replace(/\s+/g, '_')}_domain_check.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Get filtered domains based on status
+  const getFilteredDomains = () => {
+    if (showDomainFilter === 'all') return selectedDomains;
+    return selectedDomains.filter(item => domainStatus[item.domain] === showDomainFilter);
+  };
+
+  // Calculate stats for domain checks
+  const getDomainStats = () => {
+    const total = selectedDomains.length;
+    const exists = selectedDomains.filter(item => domainStatus[item.domain] === 'exists').length;
+    const notExists = selectedDomains.filter(item => domainStatus[item.domain] === 'not-exists').length;
+    const unknown = total - exists - notExists;
+    
+    return { total, exists, notExists, unknown };
+  };
+
+  // Calculate progress percentage
+  const progressPercentage = openingDomains 
+    ? Math.round((currentDomainIndex / selectedDomains.length) * 100)
+    : 0;
 
   if (!isOpen) return null;
+
+  const filteredDomains = getFilteredDomains();
+  const stats = getDomainStats();
 
   return (
     <AnimatePresence>
@@ -583,7 +195,7 @@ const DomainCheckerModal = ({ company, isOpen, onClose }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
-        onClick={onClose}
+        onClick={() => !openingDomains && onClose()}
       >
         <motion.div
           ref={modalRef}
@@ -597,84 +209,277 @@ const DomainCheckerModal = ({ company, isOpen, onClose }) => {
             <h3 className="text-lg font-semibold text-blue-900">
               {`Domain Checker: ${company}`}
             </h3>
-            <button 
-              onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-full"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {!openingDomains && (
+              <button 
+                onClick={onClose}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Pop-up Blocker Warning */}
+          {!popupWarningDismissed && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-red-700 font-medium mb-1">Important: Enable Pop-ups</p>
+                <p className="text-sm text-red-600">
+                  This tool opens domain searches in new tabs. Please ensure your browser allows pop-ups from this site,
+                  or the domain checks won't work properly.
+                </p>
+              </div>
+              <button 
+                onClick={() => setPopupWarningDismissed(true)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full flex-shrink-0"
+                aria-label="Dismiss warning"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+
+          {/* Domain Stats */}
+          <div className="mb-4 grid grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
+            <div className="text-center">
+              <p className="text-xs text-blue-600">Total</p>
+              <p className="font-bold text-blue-900">{stats.total}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-green-600">Exists</p>
+              <p className="font-bold text-green-700">{stats.exists}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-red-600">Not Exists</p>
+              <p className="font-bold text-red-700">{stats.notExists}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-600">Unknown</p>
+              <p className="font-bold text-gray-700">{stats.unknown}</p>
+            </div>
           </div>
 
           {/* Action Buttons */}
           <div className="mb-4 flex flex-wrap gap-2">
-            <button
-              onClick={handleCopyAllDomains}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-            >
-              {copied ? (
-                <>
-                  <CheckCheck className="w-4 h-4" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  Copy All Links
-                </>
-              )}
-            </button>
-            
-            <button
-              onClick={openBatchDomainResearcher}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Globe className="w-4 h-4" />
-              Open Domain Researcher
-            </button>
+            {!openingDomains ? (
+              <>
+                <button
+                  onClick={handleCopyAllDomains}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCheck className="w-4 h-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Copy All Links
+                    </>
+                  )}
+                </button>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Open every</span>
+                  <select 
+                    value={openDelay}
+                    onChange={(e) => setOpenDelay(Number(e.target.value))}
+                    className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  >
+                    <option value="0.5">0.5 second</option>
+                    <option value="1">1 second</option>
+                    <option value="2">2 seconds</option>
+                    <option value="3">3 seconds</option>
+                    <option value="5">5 seconds</option>
+                  </select>
+                </div>
+                
+                <button
+                  onClick={startRateLimitedOpening}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Start Domain Search
+                </button>
+
+                {/* Export Button */}
+                <button
+                  onClick={exportToCSV}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ml-auto"
+                >
+                  <Download className="w-4 h-4" />
+                  Export CSV
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setOpeningDomains(false)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <X className="w-4 h-4" />
+                Stop Opening
+              </button>
+            )}
           </div>
+
+          {/* Filter Options */}
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-sm text-gray-600">Filter:</span>
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button 
+                onClick={() => setShowDomainFilter('all')} 
+                className={`px-3 py-1 rounded text-sm ${showDomainFilter === 'all' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}
+              >
+                All
+              </button>
+              <button 
+                onClick={() => setShowDomainFilter('exists')} 
+                className={`px-3 py-1 rounded text-sm ${showDomainFilter === 'exists' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}
+              >
+                Exists
+              </button>
+              <button 
+                onClick={() => setShowDomainFilter('not-exists')} 
+                className={`px-3 py-1 rounded text-sm ${showDomainFilter === 'not-exists' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}
+              >
+                Not Exists
+              </button>
+              <button 
+                onClick={() => setShowDomainFilter('unknown')} 
+                className={`px-3 py-1 rounded text-sm ${showDomainFilter === 'unknown' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}
+              >
+                Unknown
+              </button>
+            </div>
+          </div>
+
+          {/* Progress Bar (only shown when opening domains) */}
+          {openingDomains && (
+            <div className="mb-4">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-blue-700">
+                  Checking domain {currentDomainIndex + 1} of {selectedDomains.length}
+                </span>
+                <span className="text-blue-700 font-medium">{progressPercentage}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-center mt-2">
+                <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+              </div>
+            </div>
+          )}
 
           {/* Information Alert */}
           <div className="border-t border-gray-200 pt-3">
             <div className="text-sm text-yellow-600 bg-yellow-50 p-3 rounded-lg mb-4 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <p>
-                The domain researcher tool will open in a new tab. Make sure pop-ups are allowed in your browser.
-                It provides a better way to research domains systematically without juggling multiple tabs.
+                {openingDomains 
+                  ? `Opening one search every ${openDelay} seconds to avoid rate limiting. Please don't close this dialog.`
+                  : "This will open Google searches for each domain variation to help you validate if they exist. Mark each domain as 'Exists' or 'Not Exists' to track your findings."
+                }
               </p>
             </div>
 
             {/* Domain List */}
             <div className="space-y-3" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {selectedDomains.map((item, index) => (
-                <div 
-                  key={index} 
-                  className="p-3 rounded-lg flex items-center gap-3 bg-gray-50"
-                >
-                  <Globe className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-blue-900 mb-1 truncate">{item.domain}</div>
-                    <a
-                      href={item.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 hover:underline text-sm truncate block"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenSingle(item.link);
-                      }}
-                    >
-                      Google Search
-                    </a>
-                  </div>
-                  <button
-                    onClick={() => handleOpenSingle(item.link)}
-                    className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg flex-shrink-0"
-                    title="Open search"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </button>
+              {filteredDomains.length === 0 ? (
+                <div className="text-center text-gray-500 py-6">
+                  No domains match the selected filter
                 </div>
-              ))}
+              ) : (
+                filteredDomains.map((item, index) => {
+                  const originalIndex = selectedDomains.findIndex(d => d.domain === item.domain);
+                  const status = domainStatus[item.domain] || 'unknown';
+                  return (
+                    <div 
+                      key={item.domain} 
+                      className={`p-3 rounded-lg flex items-center gap-3 ${
+                        status === 'exists' 
+                          ? 'bg-green-50 border border-green-100' 
+                          : status === 'not-exists'
+                            ? 'bg-red-50 border border-red-100'
+                            : item.opened 
+                              ? 'bg-blue-50 border border-blue-100'
+                              : originalIndex === currentDomainIndex && openingDomains
+                                ? 'bg-blue-50 border border-blue-100'
+                                : 'bg-gray-50'
+                      }`}
+                    >
+                      {/* Domain Status Icon */}
+                      {status === 'exists' ? (
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      ) : status === 'not-exists' ? (
+                        <XIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
+                      ) : item.opened ? (
+                        <CheckCheck className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      ) : originalIndex === currentDomainIndex && openingDomains ? (
+                        <Loader2 className="w-4 h-4 text-blue-600 animate-spin flex-shrink-0" />
+                      ) : (
+                        <Globe className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-blue-900 mb-1 truncate">{item.domain}</div>
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm truncate block"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenSingle(item.link, originalIndex);
+                          }}
+                        >
+                          Google Search
+                        </a>
+                      </div>
+                      
+                      {/* Domain Status Controls */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => handleDomainStatusChange(item.domain, 'exists')}
+                          className={`p-2 rounded-lg flex items-center justify-center ${
+                            status === 'exists' 
+                              ? 'bg-green-500 text-white' 
+                              : 'bg-gray-100 text-gray-700 hover:bg-green-100'
+                          }`}
+                          title="Mark as exists"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDomainStatusChange(item.domain, 'not-exists')}
+                          className={`p-2 rounded-lg flex items-center justify-center ${
+                            status === 'not-exists' 
+                              ? 'bg-red-500 text-white' 
+                              : 'bg-gray-100 text-gray-700 hover:bg-red-100'
+                          }`}
+                          title="Mark as does not exist"
+                        >
+                          <XIcon className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => handleOpenSingle(item.link, originalIndex)}
+                          className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg flex-shrink-0"
+                          title="Open search"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </motion.div>
