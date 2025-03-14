@@ -19,8 +19,28 @@ const SECONDARY_DOMAINS = [
     '.za', '.eg', '.ma', '.ng', '.ke', '.tz', '.io', '.ai', '.tech', '.co'
 ];
 
+// Define role-specific link types and labels
+const ROLE_LINK_TYPES = {
+    'sales': [
+        { type: 'dev', label: 'Dev Search' },
+        { type: 'securityIAM', label: 'Security/IAM' },
+        { type: 'finance', label: 'Finance' }
+    ],
+    'recruiter': [
+        { type: 'dev', label: 'Tech Candidates' }, // Using 'dev' type for Tech Candidates
+        { type: 'techLeaders', label: 'Tech Leaders' },
+        { type: 'financeCandidates', label: 'Finance Candidates' }
+    ],
+    'jobseeker': [
+        // Removed "Find Peers" as requested
+        { type: 'hrContacts', label: 'HR Contacts' },
+        { type: 'financeContacts', label: 'Finance Contacts' }
+    ]
+};
+
 const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
     const [generatedLinks, setGeneratedLinks] = useState([]);
+    const [allGeneratedLinks, setAllGeneratedLinks] = useState({}); // Store links for all roles
     const [searchHistory, setSearchHistory] = useState([]);
     const { currentRole, roleConfig } = useRole();
     const [showBucketSelector, setShowBucketSelector] = useState(true);
@@ -49,8 +69,15 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         }
     }, [currentRole]);
 
-    const getRoleSpecificLinks = (company, domain) => {
-        switch (currentRole) {
+    // Update displayed links when role changes
+    useEffect(() => {
+        if (allGeneratedLinks[currentRole]) {
+            setGeneratedLinks(allGeneratedLinks[currentRole]);
+        }
+    }, [currentRole, allGeneratedLinks]);
+
+    const getRoleSpecificLinks = (company, domain, role) => {
+        switch (role) {
             case 'sales':
                 return generateSalesLinks(company, domain);
             case 'recruiter':
@@ -66,18 +93,33 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         setLoading(true);
         
         try {
-            const newLinks = companies.map((company) => ({
-                id: Date.now() + Math.random(),
-                company,
-                priorityDomains: PRIORITY_DOMAINS,
-                secondaryDomains: SECONDARY_DOMAINS,
-                selectedDomain: null,
-                links: getRoleSpecificLinks(company, PRIORITY_DOMAINS[0]),
-                role: currentRole
-            }));
+            // Create a new object to store links for all roles
+            const newAllGeneratedLinks = { ...allGeneratedLinks };
+            
+            // Generate links for each role
+            ['sales', 'recruiter', 'jobseeker'].forEach(role => {
+                const roleLinks = companies.map((company) => ({
+                    id: Date.now() + Math.random(),
+                    company,
+                    priorityDomains: PRIORITY_DOMAINS,
+                    secondaryDomains: SECONDARY_DOMAINS,
+                    selectedDomain: null,
+                    links: getRoleSpecificLinks(company, PRIORITY_DOMAINS[0], role),
+                    role
+                }));
 
-            setGeneratedLinks(newLinks);
-            saveToHistory(companies, newLinks);
+                // Store links for this role
+                newAllGeneratedLinks[role] = roleLinks;
+            });
+
+            // Update the state with all generated links
+            setAllGeneratedLinks(newAllGeneratedLinks);
+            
+            // Update displayed links for current role
+            setGeneratedLinks(newAllGeneratedLinks[currentRole]);
+            
+            // Save all links to history
+            saveToHistory(companies, newAllGeneratedLinks[currentRole]);
             
             if (updateMetrics) {
                 updateMetrics();
@@ -139,6 +181,16 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         setShowBucketSelector(!showBucketSelector);
     };
 
+    // Get link types for the current role
+    const getCurrentRoleLinkTypes = () => {
+        return ROLE_LINK_TYPES[currentRole] || [];
+    };
+
+    // Check if links exist for the current role
+    const hasLinksForCurrentRole = () => {
+        return allGeneratedLinks[currentRole] && allGeneratedLinks[currentRole].length > 0;
+    };
+
     return (
         <div className="min-h-screen py-6 md:py-12 px-4">
             <div className="max-w-5xl mx-auto">
@@ -183,45 +235,42 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                     {/* Generated Links */}
                     <div ref={scrollRef}>
                         <AnimatePresence mode="wait">
-                            {generatedLinks.length > 0 && (
+                            {hasLinksForCurrentRole() && (
                                 <motion.div
-                                className="mt-8 md:mt-12 space-y-6 md:space-y-8"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                            >
-                                {/* Open All Links Buttons */}
-                                <div className="mb-4 flex flex-wrap gap-2">
-                                    <OpenAllLinksButton 
-                                        generatedLinks={generatedLinks.filter(linkData => linkData.role === currentRole)} 
-                                        linkType="dev" 
-                                        label="Dev Search" 
-                                    />
-                                    <OpenAllLinksButton 
-                                        generatedLinks={generatedLinks.filter(linkData => linkData.role === currentRole)} 
-                                        linkType="securityIAM" 
-                                        label="Security/IAM" 
-                                    />
-                                    <OpenAllLinksButton 
-                                        generatedLinks={generatedLinks.filter(linkData => linkData.role === currentRole)} 
-                                        linkType="finance" 
-                                        label="Finance" 
-                                    />
-                                </div>
-                                
-                                {/* Individual Link Cards */}
-                                {generatedLinks
-                                    .filter(linkData => linkData.role === currentRole)
-                                    .map((linkData) => (
+                                    className="mt-8 md:mt-12 space-y-6 md:space-y-8"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                >
+                                    {/* Open All Links Buttons */}
+                                    <div className="mb-4 flex flex-wrap gap-2">
+                                        {getCurrentRoleLinkTypes().map(({ type, label }) => (
+                                            <OpenAllLinksButton 
+                                                key={type}
+                                                generatedLinks={allGeneratedLinks[currentRole]} 
+                                                linkType={type} 
+                                                label={label} 
+                                            />
+                                        ))}
+                                    </div>
+                                    
+                                    {/* Individual Link Cards */}
+                                    {allGeneratedLinks[currentRole]?.map((linkData) => (
                                         <GeneratedLinkCard
                                             key={linkData.id}
                                             linkData={linkData}
                                             onUpdateLink={(updatedLink) => {
-                                                setGeneratedLinks(prev =>
-                                                    prev.map(link => 
-                                                        link.id === updatedLink.id ? updatedLink : link
-                                                    )
+                                                // Update both allGeneratedLinks and generatedLinks
+                                                const updatedRoleLinks = allGeneratedLinks[currentRole].map(link => 
+                                                    link.id === updatedLink.id ? updatedLink : link
                                                 );
+                                                
+                                                setAllGeneratedLinks(prev => ({
+                                                    ...prev,
+                                                    [currentRole]: updatedRoleLinks
+                                                }));
+                                                
+                                                setGeneratedLinks(updatedRoleLinks);
                                             }}
                                             showBucketSelector={showBucketSelector}
                                             isExpanded={expandedCard === linkData.id}
@@ -233,7 +282,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                                             isMobile={isMobile}
                                         />
                                     ))}
-                            </motion.div>
+                                </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
@@ -241,10 +290,21 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                     {/* Search History */}
                     <SearchHistorySection
                         searchHistory={searchHistory}
+                        generatedLinks={generatedLinks}
                         onClearHistory={() => {
                             setSearchHistory([]);
                             localStorage.removeItem(`searchHistory_${currentRole}`);
                             localStorage.removeItem(`generatedLinks_${currentRole}`);
+                            
+                            // Also clear the current role's generated links
+                            setAllGeneratedLinks(prev => {
+                                const newLinks = { ...prev };
+                                delete newLinks[currentRole];
+                                return newLinks;
+                            });
+                            
+                            setGeneratedLinks([]);
+                            
                             if (updateMetrics) {
                                 updateMetrics();
                             }

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, AlertCircle, X, Copy, CheckCheck, Loader2 } from 'lucide-react';
 
 const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
+  // Initialize all hooks unconditionally
   const [showLinkList, setShowLinkList] = useState(false);
   const [selectedLinks, setSelectedLinks] = useState([]);
   const [copied, setCopied] = useState(false);
@@ -11,19 +12,20 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
   const [openDelay, setOpenDelay] = useState(3); // Default 3 seconds delay
   const modalRef = useRef(null);
 
-  // Count how many links of this type exist across all companies
-  const filteredLinks = generatedLinks.filter(company => 
-    company.links && company.links[linkType]
-  );
+  // Filter and count links safely
+  const filteredLinks = React.useMemo(() => {
+    if (!generatedLinks || !Array.isArray(generatedLinks)) {
+      return [];
+    }
+    
+    return generatedLinks.filter(company => 
+      company && company.links && company.links[linkType]
+    );
+  }, [generatedLinks, linkType]);
   
   const linkCount = filteredLinks.length;
 
-  // No links of this type exist
-  if (linkCount === 0) {
-    return null;
-  }
-
-  // When modal is shown, make sure it's visible in the viewport
+  // Safely handle modal visibility when shown
   useEffect(() => {
     if (showLinkList && modalRef.current) {
       // Small delay to ensure modal is rendered
@@ -36,7 +38,11 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
     }
   }, [showLinkList]);
 
+  // No early return - just render an empty button if no links
   const handleShowLinks = () => {
+    // Only proceed if we have links
+    if (filteredLinks.length === 0) return;
+    
     // Collect all the links of the specified type
     const links = filteredLinks.map(company => ({
       company: company.company,
@@ -80,6 +86,8 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
 
   // Rate-limited link opening process
   const startRateLimitedOpening = () => {
+    if (selectedLinks.length === 0) return;
+    
     setOpeningLinks(true);
     setCurrentLinkIndex(0);
     
@@ -96,7 +104,7 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
   
   // Recursive function to open links with delay
   const openNextLink = (index, links) => {
-    if (index >= links.length) {
+    if (!links || index >= links.length) {
       // All links opened
       setOpeningLinks(false);
       return;
@@ -113,9 +121,14 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
   };
 
   // Calculate progress percentage
-  const progressPercentage = openingLinks 
+  const progressPercentage = openingLinks && selectedLinks.length > 0
     ? Math.round((currentLinkIndex / selectedLinks.length) * 100)
     : 0;
+
+  // Don't render if no links of this type exist
+  if (linkCount === 0) {
+    return null;
+  }
 
   return (
     <>
