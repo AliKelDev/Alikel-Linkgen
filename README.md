@@ -4,7 +4,7 @@
 
 **NOTE** : You can just use the demo link instead of installing it and running it locally.[ https://linkforge-alikeldev.netlify.app/dashboard](url)
 
-**NOTE** : Currently fixing a bug where switching between roles after having pressed search crashes everything. Will be fixed. 
+**NOTE** : will update the way buckets work, not too happy with their overall usefullness and how they dont fit the ui
 
 **NOTE** : It's mostly a personal tool to make my job easier.
 
