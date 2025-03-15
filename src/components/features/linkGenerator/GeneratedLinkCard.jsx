@@ -175,13 +175,13 @@ const GeneratedLinkCard = ({
                                                 href={linkInfo.link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 break-all"
-                                            >
-                                                <span className="truncate">
-                                                    {isMobile ? linkInfo.link.substring(0, 40) + '...' : linkInfo.link}
+                                                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 max-w-full"
+                                              >
+                                                <span className="truncate block max-w-full overflow-hidden">
+                                                  {isMobile ? linkInfo.link.substring(0, 40) + '...' : linkInfo.link}
                                                 </span>
                                                 <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                                            </a>
+                                              </a>
                                             <p className="text-sm text-gray-600 mt-1">
                                                 {linkInfo.description}
                                             </p>

@@ -581,28 +581,32 @@ const AnimatedBackground = () => {
                 </AnimatePresence>
 
                 {/* Help Button (only visible when chat is not open) */}
-                {showHelp && !isChatOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl 
-                            flex items-center gap-3 z-50 max-w-[90vw] md:max-w-md
-                            ${isMobile ? 'safe-bottom' : ''}`}
-                    >
-                        <Bot className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                        <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate">Hi! I'm Kei - LinkForge AI</p>
-                            <p className="text-sm text-gray-600 truncate">Need help with prospect research?</p>
-                        </div>
-                        <button
-                            onClick={() => setShowHelp(false)}
-                            className="p-1 text-gray-400 hover:text-gray-600 rounded-full flex-shrink-0"
-                            aria-label="Close help"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
-                    </motion.div>
-                )}
+{showHelp && !isChatOpen && (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl 
+            flex items-center gap-3 z-50 max-w-[90vw] md:max-w-md cursor-pointer
+            ${isMobile ? 'safe-bottom' : ''}`}
+        onClick={() => openChat()}
+    >
+        <span className="text-xl flex-shrink-0">🦊</span>
+        <div className="min-w-0">
+            <p className="font-medium text-gray-900 truncate">Hi! I'm Kei - LinkForge AI</p>
+            <p className="text-sm text-gray-600 truncate">Need help with prospect research?</p>
+        </div>
+        <button
+            onClick={(e) => {
+                e.stopPropagation();
+                setShowHelp(false);
+            }}
+            className="p-1 text-gray-400 hover:text-gray-600 rounded-full flex-shrink-0"
+            aria-label="Close help"
+        >
+            <X className="w-4 h-4" />
+        </button>
+    </motion.div>
+)}
             </div>
         </ChatContext.Provider>
     );

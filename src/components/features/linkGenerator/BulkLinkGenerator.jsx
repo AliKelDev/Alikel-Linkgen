@@ -43,7 +43,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
     const [allGeneratedLinks, setAllGeneratedLinks] = useState({}); // Store links for all roles
     const [searchHistory, setSearchHistory] = useState([]);
     const { currentRole, roleConfig } = useRole();
-    const [showBucketSelector, setShowBucketSelector] = useState(true);
+    const [showBucketSelector, setShowBucketSelector] = useState(false);
     const [loading, setLoading] = useState(false);
     const [expandedCard, setExpandedCard] = useState(null);
     const scrollRef = useRef(null);
