@@ -80,13 +80,13 @@ const SearchHistorySection = ({
                     </p>
                   </div>
                   <motion.button
-                    onClick={() => onSearchAgain(item.company)}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium whitespace-nowrap"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Search Again
-                  </motion.button>
+  onClick={() => onSearchAgain(item.company)}
+  className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium whitespace-nowrap touch-manipulation min-h-[44px] active:bg-blue-800"
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+>
+  Search Again
+</motion.button>
                 </div>
               </motion.div>
             ))}

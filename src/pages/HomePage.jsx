@@ -96,15 +96,30 @@ const HomePage = ({ searchQuery, setNotifications, notifications }) => {
                 {/* Recent Activity Sidebar */}
                 <div className="activity-feed bg-white rounded-2xl shadow-xl p-6 h-fit lg:sticky lg:top-6">
                     <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-                     <SearchHistorySection
-                        compact={true}
-                        searchHistory={localStorage.getItem(`searchHistory_${currentRole}`) ? JSON.parse(localStorage.getItem(`searchHistory_${currentRole}`)) : []}
-                        onClearHistory={() => {
-                            localStorage.removeItem(`searchHistory_${currentRole}`);
-                            updateMetrics();
-                        }}
-                        onSearchAgain={() => { }}
-                    />
+                    <SearchHistorySection
+  compact={true}
+  searchHistory={localStorage.getItem(`searchHistory_${currentRole}`) ? JSON.parse(localStorage.getItem(`searchHistory_${currentRole}`)) : []}
+  onClearHistory={() => {
+      localStorage.removeItem(`searchHistory_${currentRole}`);
+      updateMetrics();
+  }}
+  // Connect this to your BulkLinkGenerator:
+  onSearchAgain={(company) => {
+    // Scroll to the search form first
+    document.getElementById('search-form-section')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+    
+    // Then trigger the search with a slight delay to ensure scroll completes
+    setTimeout(() => {
+      // You'll need to expose this function or use a state/context to trigger the search
+      if (window.triggerSearch) {
+        window.triggerSearch([company]);
+      }
+    }, 300);
+  }}
+/>
                 </div>
             </div>
         </div>

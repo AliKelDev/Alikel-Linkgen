@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CompanyInput from './CompanyInput';
 import GeneratedLinkCard from './GeneratedLinkCard';
@@ -47,6 +47,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
     const [loading, setLoading] = useState(false);
     const [expandedCard, setExpandedCard] = useState(null);
     const scrollRef = useRef(null);
+    const formRef = useRef(null);
     const [isMobile, setIsMobile] = useState(false);
 
     // Check for mobile viewport
@@ -59,6 +60,16 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         checkMobile();
         
         return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Expose the handleGenerateLinks function to window for cross-component access
+    useEffect(() => {
+        window.triggerSearch = handleGenerateLinks;
+        
+        return () => {
+            // Clean up
+            delete window.triggerSearch;
+        };
     }, []);
 
     // Load search history
@@ -125,12 +136,27 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                 updateMetrics();
             }
 
-            // Scroll to results with smooth behavior
+            // Scroll to results with smooth behavior for all devices
             if (scrollRef.current) {
-                scrollRef.current.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start'
-                });
+                // For mobile devices, use a more compatible approach
+                if (isMobile) {
+                    // First scroll to top
+                    window.scrollTo(0, 0);
+                    // Then to the element
+                    setTimeout(() => {
+                        const yOffset = scrollRef.current.getBoundingClientRect().top + window.pageYOffset - 100;
+                        window.scrollTo({
+                            top: yOffset,
+                            behavior: 'smooth'
+                        });
+                    }, 100);
+                } else {
+                    // Desktop behavior
+                    scrollRef.current.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start'
+                    });
+                }
             }
 
             // Add notification
@@ -191,6 +217,34 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         return allGeneratedLinks[currentRole] && allGeneratedLinks[currentRole].length > 0;
     };
 
+    // Function to handle the search again action
+    const handleSearchAgain = (company) => {
+        // Scroll to form first
+        if (formRef.current) {
+            // For mobile devices, use a more robust scrolling approach
+            if (isMobile) {
+                const yOffset = formRef.current.getBoundingClientRect().top + window.pageYOffset - 100;
+                window.scrollTo({
+                    top: yOffset,
+                    behavior: 'smooth'
+                });
+            } else {
+                formRef.current.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }
+            
+            // Slight delay to ensure scroll completes
+            setTimeout(() => {
+                handleGenerateLinks([company]);
+            }, 300);
+        } else {
+            // If ref not available, just generate links
+            handleGenerateLinks([company]);
+        }
+    };
+
     return (
         <div className="min-h-screen py-6 md:py-12 px-4">
             <div className="max-w-5xl mx-auto">
@@ -220,8 +274,8 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                 {/* Role Selector */}
                 <RoleSelector />
 
-                {/* Main Content Card */}
-                <div className="bg-white/80 rounded-2xl shadow-xl p-4 md:p-8 backdrop-blur-lg">
+                {/* Main Content Card - Add ref to form section */}
+                <div id="search-form-section" ref={formRef} className="bg-white/80 rounded-2xl shadow-xl p-4 md:p-8 backdrop-blur-lg">
                     <CompanyInput onSubmit={handleGenerateLinks} />
 
                     {/* Loading State */}
@@ -287,7 +341,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                         </AnimatePresence>
                     </div>
 
-                    {/* Search History */}
+                    {/* Search History - Pass the handleSearchAgain function */}
                     <SearchHistorySection
                         searchHistory={searchHistory}
                         generatedLinks={generatedLinks}
@@ -309,9 +363,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                                 updateMetrics();
                             }
                         }}
-                        onSearchAgain={(company) => {
-                            handleGenerateLinks([company]);
-                        }}
+                        onSearchAgain={handleSearchAgain}
                     />
                 </div>
             </div>
