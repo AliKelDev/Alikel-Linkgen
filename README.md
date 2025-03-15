@@ -4,9 +4,11 @@
 
 **NOTE** : You can just use the demo link instead of installing it and running it locally.[ https://linkforge-alikeldev.netlify.app/dashboard](url)
 
-**NOTE** : will update the way buckets work, not too happy with their overall usefullness and how they dont fit the ui
+**NOTE** : will let Kei do have more AI related abilities . i dont know what yet ! but Max does has bunch of abilities on deepfit, Kei could probably do way much more stuff on linkgen, like analysis, i dont know of what, but he's clearly underused rn
 
-**NOTE** : It's mostly a personal tool to make my job easier.
+**NOTE** : I'll add profile creation, like there is on [https://deepfit-alikearn.com/](url), so that Kei can remember important things, like special prompts, my role, what company i work for, etc etc.
+
+**NOTE** : It's mostly a personal tool to make my job easier, most updates are made to make my life easier haha
 
 ![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white)
@@ -34,7 +36,8 @@ Alikel Linkgen is a React-based LinkedIn search automation tool designed to stre
 
 ### Sales Workflow
 
-<img width="962" alt="image" src="https://github.com/user-attachments/assets/0f70cc1a-1865-41b5-8f2e-f68f0fc327da" />
+<img width="708" alt="image" src="https://github.com/user-attachments/assets/041cc293-8683-478b-b008-459c04bb9b4e" />
+
 
 
 As a tech sales professional:
@@ -51,7 +54,8 @@ This saves hours compared to manually searching on LinkedIn and helps focus on t
 
 ### Recruiter Workflow
 
-<img width="904" alt="image" src="https://github.com/user-attachments/assets/3a468707-fbb8-4121-884a-9ab1e3962154" />
+<img width="701" alt="image" src="https://github.com/user-attachments/assets/5bdfd975-4f05-4069-b200-0a47f6c2e3a8" />
+
 
 
 As a technical recruiter:
@@ -65,7 +69,8 @@ As a technical recruiter:
 
 ### Job Seeker Workflow
 
-<img width="853" alt="image" src="https://github.com/user-attachments/assets/ee5d1183-a149-4f88-bec6-5c9519f1edb5" />
+<img width="695" alt="image" src="https://github.com/user-attachments/assets/f73b8e40-4c07-44f6-843a-625f923a55b6" />
+
 
 
 As a job seeker looking for opportunities:
@@ -130,23 +135,36 @@ Kei is your AI research assistant (if you run it locally, you can make him run o
 
 ### Company Bucket Selector
 
-<img width="706" alt="image" src="https://github.com/user-attachments/assets/89e2563f-5f0b-4f5b-a136-cfa5d0ae39a7" />
+<img width="694" alt="image" src="https://github.com/user-attachments/assets/24e4d64f-d143-4710-878c-c11c766f62c8" />
+<img width="701" alt="image" src="https://github.com/user-attachments/assets/988e5502-4369-4993-8333-cd22e259c12b" />
 
 
-Classify companies based on development and security team sizes: (i plan on making them customizable)
+## Company Classification System
 
-- Tech Giant (10000+ devs, 3000+ security)
-- Major Enterprise
-- Large Enterprise
-- Enterprise
-- Growth Plus
-- Growth
-- Late Startup
-- Mid Startup
-- Early Startup
-- Pre-Seed
+Classify companies based on development and security team sizes with fully customizable buckets:
 
-This classification helps tailor your outreach strategy to the company's scale and likely needs.
+- **Tech Giant** (10000+ devs, 3000+ security)
+- **Major Enterprise** (5000+ devs, 1500+ security)
+- **Large Enterprise** (2000+ devs, 600+ security)
+- **Enterprise** (1000+ devs, 300+ security)
+- **Growth Plus** (500+ devs, 150+ security)
+- **Growth** (200+ devs, 60+ security)
+- **Late Startup** (100+ devs, 30+ security)
+- **Mid Startup** (50+ devs, 15+ security)
+- **Early Startup** (20+ devs, 6+ security)
+- **Pre-Seed** (0+ devs, 0+ security)
+
+### New Bucket Management Features
+
+You can now fully customize the classification system to match your specific needs:
+
+- **Edit buckets**: Modify bucket names, team size thresholds, and color coding
+- **Add buckets**: Create new company size categories with custom parameters
+- **Delete buckets**: Remove unwanted classifications from your system
+- **Reset buckets**: Return to default classifications if needed
+
+This flexible classification system helps tailor your outreach strategy to each company's scale and likely needs.
+
 
 ### Link Management
 
@@ -300,3 +318,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Developed by [AliKelDev](https://github.com/AliKelDev)
 - Built with React and Netlify
+
+NOTE : I am Alice, it's an Alias. Alice Leiser = Alikel = AKD = Jordan.M, so when Alice Leiser commits something, it's me.
