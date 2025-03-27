@@ -15,5 +15,5 @@
 
 [dev]
   framework = "vite"
-  targetPort = 5173
+  targetPort = 3000
   autoLaunch = false

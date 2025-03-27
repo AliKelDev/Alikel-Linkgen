@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import BulkLinkGenerator from '../components/features/linkGenerator/BulkLinkGenerator';
+import BulkNameSearch from '../components/features/nameGenerator/BulkNameSearch';
 import SearchHistorySection from '../components/features/linkGenerator/SearchHistorySection';
-import { ShieldCheck, ChartBar, Users, Link } from 'lucide-react';
+import { ShieldCheck, ChartBar, Users, Link, Building, User } from 'lucide-react';
 import { useRole } from '../contexts/RoleContext';
 
 const MetricCard = ({ title, value, trend, icon: Icon, onClick }) => (
@@ -30,6 +31,7 @@ const HomePage = ({ searchQuery, setNotifications, notifications }) => {
     const [generatedLinkCount, setGeneratedLinkCount] = useState(0);
     const { currentRole } = useRole();
     const [showHistory, setShowHistory] = useState(false);
+    const [searchMode, setSearchMode] = useState('company'); // 'company' or 'name'
 
     const toggleHistory = () => {
         setShowHistory(!showHistory);
@@ -84,12 +86,44 @@ const HomePage = ({ searchQuery, setNotifications, notifications }) => {
                 />
             </div>
 
+            {/* Search Mode Toggle */}
+            <div className="flex justify-center mb-8">
+                <div className="bg-white p-1 rounded-xl shadow-md inline-flex">
+                    <button
+                        onClick={() => setSearchMode('company')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                            searchMode === 'company' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                    >
+                        <Building className="w-5 h-5" />
+                        <span>Company Search</span>
+                    </button>
+                    <button
+                        onClick={() => setSearchMode('name')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                            searchMode === 'name' 
+                                ? 'bg-blue-500 text-white' 
+                                : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                    >
+                        <User className="w-5 h-5" />
+                        <span>Name Search</span>
+                    </button>
+                </div>
+            </div>
+            
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Generator Card */}
                 <div className="lg:col-span-2">
                     <div className="generator-card bg-white rounded-2xl shadow-xl p-6">
-                        <BulkLinkGenerator updateMetrics={updateMetrics} setNotifications={setNotifications} />
+                        {searchMode === 'company' ? (
+                            <BulkLinkGenerator updateMetrics={updateMetrics} setNotifications={setNotifications} />
+                        ) : (
+                            <BulkNameSearch updateMetrics={updateMetrics} setNotifications={setNotifications} />
+                        )}
                     </div>
                 </div>
 
@@ -97,29 +131,35 @@ const HomePage = ({ searchQuery, setNotifications, notifications }) => {
                 <div className="activity-feed bg-white rounded-2xl shadow-xl p-6 h-fit lg:sticky lg:top-6">
                     <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
                     <SearchHistorySection
-  compact={true}
-  searchHistory={localStorage.getItem(`searchHistory_${currentRole}`) ? JSON.parse(localStorage.getItem(`searchHistory_${currentRole}`)) : []}
-  onClearHistory={() => {
-      localStorage.removeItem(`searchHistory_${currentRole}`);
-      updateMetrics();
-  }}
-  // Connect this to your BulkLinkGenerator:
-  onSearchAgain={(company) => {
-    // Scroll to the search form first
-    document.getElementById('search-form-section')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
-    
-    // Then trigger the search with a slight delay to ensure scroll completes
-    setTimeout(() => {
-      // You'll need to expose this function or use a state/context to trigger the search
-      if (window.triggerSearch) {
-        window.triggerSearch([company]);
-      }
-    }, 300);
-  }}
-/>
+                        compact={true}
+                        searchHistory={localStorage.getItem(`searchHistory_${currentRole}`) ? JSON.parse(localStorage.getItem(`searchHistory_${currentRole}`)) : []}
+                        onClearHistory={() => {
+                            localStorage.removeItem(`searchHistory_${currentRole}`);
+                            updateMetrics();
+                        }}
+                        onSearchAgain={(company) => {
+                            // If we're in name search mode, switch to company mode
+                            if (searchMode === 'name') {
+                                setSearchMode('company');
+                            }
+                            
+                            // Scroll to the search form
+                            document.getElementById('search-form-section')?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
+                            
+                            // Then trigger the search with a slight delay to ensure scroll completes
+                            setTimeout(() => {
+                                // Use the appropriate search function based on mode
+                                if (searchMode === 'company' && window.triggerSearch) {
+                                    window.triggerSearch([company]);
+                                } else if (searchMode === 'name' && window.nameSearch) {
+                                    window.nameSearch([company]); // Use the company name as a person name
+                                }
+                            }, 300);
+                        }}
+                    />
                 </div>
             </div>
         </div>

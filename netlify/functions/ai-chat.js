@@ -9,7 +9,7 @@ export async function handler(event) {
       personalityMode = professionalismLevel;
     }
 
-    // Construct messages array for the AI API
+    // Construct messages array for the AI API s
     const aiMessages = [
       {
         role: "system",
