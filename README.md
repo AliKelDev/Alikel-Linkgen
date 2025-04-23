@@ -26,6 +26,7 @@ LinkForge is a React-based automation tool designed to streamline the process of
 -   **Multi-Role Support:** Tailored workflows for Sales Teams, Recruiters, and Job Seekers.
 -   **Bulk Company Link Generation:** Generate targeted Sales Navigator searches for dozens of companies simultaneously.
 -   **Bulk Person Name Search:** Generate Sales Navigator searches for specific individuals by name, optionally filtering by a common company.
+-   **Combined Person Search:** Generate a single bulk search link using `OR` logic to find any of the entered individuals at once.
 -   **AI-Powered Assistant (Kei):** Get domain validation help, strategy planning, company analysis, and outreach advice.
 -   **Domain Checker Tool:** Visual grid preview and list view for validating company domain variations.
 -   **Company Size Buckets:** Classify companies with customizable size thresholds and manage these buckets.
@@ -75,16 +76,14 @@ As a job seeker looking for opportunities:
 
 ### General Workflow (Person Name Search)
 
-<img width="793" alt="image" src="https://github.com/user-attachments/assets/cee42f5e-63b3-4cd9-90f0-b5bebc0c6a88" />
-<img width="690" alt="image" src="https://github.com/user-attachments/assets/f57ecb1a-cfab-45a2-9fea-e49d11618f99" />
-
-
-
 1.  Switch to the "Name Search" mode on the dashboard.
 2.  Input a list of names (one per line, e.g., "John Smith", "Alice Leiser").
 3.  (Optional) Enter a common company name if you want to find these people specifically at that company.
 4.  Click "Generate Name Search Links".
-5.  Use the "Open All Basic Search Links" or "Open All Targeted Search Links" buttons to find these individuals on LinkedIn.
+5.  Review the results:
+    -   Use the individual "Open Link" buttons for each person.
+    -   Use the "Open All Basic Search Links" or "Open All Targeted Search Links" buttons to check individuals sequentially.
+    -   Use the "Open Bulk Search" link to see a combined view of results for *any* of the names entered.
 6.  Useful for verifying contacts, finding specific stakeholders, or reconnecting with known individuals.
 
 ## Core Features
@@ -137,11 +136,13 @@ Kei is your integrated AI research assistant (powered by Gemini, configurable if
 ### Person Name Search Generator
 
 -   Input a list of names (one per line).
--   Optionally provide a common company name to narrow the search.
--   Generates two types of links per name:
-    -   **Basic Search:** A general LinkedIn search for the name.
-    -   **Targeted Search:** A LinkedIn search specifically looking for the name within the provided company context (if entered).
--   Includes "Open All" buttons for both basic and targeted searches.
+-   Optionally provide a common company name to narrow the search for both individual and combined links.
+-   Generates several types of links per batch:
+    -   **Individual Basic Search:** A general LinkedIn search for each name entered.
+    -   **Individual Targeted Search:** A LinkedIn search specifically looking for each name within the provided company context (only generated if a company is entered).
+    -   **Combined Bulk Search:** A single search link using `OR` logic to find *any* of the entered names in one result set. Useful for quickly scanning for multiple contacts.
+-   Includes "Open All" buttons for individual basic and targeted searches.
+-   Provides "Open Bulk Search" and "Copy Link" buttons for the combined search.
 -   Maintains its own persistent search history (stored locally).
 
 ### Company Bucket Selector & Management
@@ -269,7 +270,7 @@ src/
 │   │   ├── sales.js
 │   │   ├── recruiter.js
 │   │   └── jobseeker.js
-│   └── nameSearchUtils.js  # URL generation logic for name search
+│   └── nameSearchUtils.js  # URL generation logic for individual and bulk name search
 └── index.css               # Tailwind base styles and custom CSS
 ```
 
