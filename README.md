@@ -75,6 +75,11 @@ As a job seeker looking for opportunities:
 
 ### General Workflow (Person Name Search)
 
+<img width="793" alt="image" src="https://github.com/user-attachments/assets/cee42f5e-63b3-4cd9-90f0-b5bebc0c6a88" />
+<img width="690" alt="image" src="https://github.com/user-attachments/assets/f57ecb1a-cfab-45a2-9fea-e49d11618f99" />
+
+
+
 1.  Switch to the "Name Search" mode on the dashboard.
 2.  Input a list of names (one per line, e.g., "John Smith", "Alice Leiser").
 3.  (Optional) Enter a common company name if you want to find these people specifically at that company.
