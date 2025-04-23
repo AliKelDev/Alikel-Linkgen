@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, History, Trash2 } from 'lucide-react';
-import { generateNameSearchLink, generateTargetedNameSearchLink } from '../../../utils/nameSearchUtils';
+import { Loader2, History, Trash2, Users, Copy, ExternalLink } from 'lucide-react';
+import { generateNameSearchLink, generateTargetedNameSearchLink, generateBulkNameSearchLink } from '../../../utils/nameSearchUtils';
 import OpenAllLinksButton from '../linkGenerator/OpenAllLinksButton';
 
 const BulkNameSearch = ({ updateMetrics, setNotifications }) => {
   const [names, setNames] = useState('');
   const [commonCompany, setCommonCompany] = useState('');
   const [generatedLinks, setGeneratedLinks] = useState([]);
+  const [bulkSearchLink, setBulkSearchLink] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const scrollRef = useRef(null);
   const formRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -114,6 +116,35 @@ const BulkNameSearch = ({ updateMetrics, setNotifications }) => {
     }
   };
 
+  /**
+   * Copy bulk search link to clipboard
+   */
+  const copyBulkLink = () => {
+    if (bulkSearchLink) {
+      navigator.clipboard.writeText(bulkSearchLink)
+        .then(() => {
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
+          
+          // Add notification
+          setNotifications(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            message: 'Bulk search link copied to clipboard!',
+            read: false,
+          }]);
+        })
+        .catch(err => {
+          console.error('Failed to copy link: ', err);
+          setNotifications(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            message: 'Failed to copy link to clipboard.',
+            read: false,
+            error: true
+          }]);
+        });
+    }
+  };
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -131,24 +162,36 @@ const BulkNameSearch = ({ updateMetrics, setNotifications }) => {
     
     try {
       // Generate links for each name
-      const links = nameList.map(name => ({
-        id: Date.now() + Math.random(),
-        name,
-        links: {
+      // Create the links object with at least the basic search
+      const links = nameList.map(name => {
+        // Always include basic search
+        const linksObj = {
           basic: {
             title: "Basic Search",
             link: generateNameSearchLink(name),
             description: `LinkedIn Search for ${name}`
-          },
-          targeted: {
+          }
+        };
+        
+        // Only add the targeted search if a company is provided
+        if (commonCompany && commonCompany.trim() !== '') {
+          linksObj.targeted = {
             title: "Targeted Search",
             link: generateTargetedNameSearchLink(name, commonCompany),
-            description: commonCompany ? 
-              `LinkedIn Search for ${name} at ${commonCompany}` : 
-              `LinkedIn Search for ${name} (targeted)`
-          }
+            description: `LinkedIn Search for ${name} at ${commonCompany}`
+          };
         }
-      }));
+        
+        return {
+          id: Date.now() + Math.random(),
+          name,
+          links: linksObj
+        };
+      });
+      
+      // Generate the bulk search link
+      const bulkLink = generateBulkNameSearchLink(nameList, commonCompany);
+      setBulkSearchLink(bulkLink);
       
       // Update state with generated links
       setGeneratedLinks(links);
@@ -280,6 +323,70 @@ Michael Johnson"
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                 >
+                  {/* Bulk Search Link Section */}
+                  {bulkSearchLink && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl border border-blue-300 shadow-md overflow-hidden p-4 md:p-6"
+                    >
+                      <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-6">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-5 h-5 text-blue-600" />
+                            <h3 className="text-xl font-bold text-blue-900">
+                              Combined Search for All Names
+                            </h3>
+                          </div>
+                          <p className="text-sm text-blue-600 mt-1">
+                            This link searches for all {generatedLinks.length} names at once using OR operators
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 bg-white rounded-lg shadow-sm">
+                        <div className="font-semibold text-blue-900 mb-2">
+                          Bulk Search URL
+                        </div>
+                        <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <a
+                              href={bulkSearchLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 break-words text-sm"
+                            >
+                              {isMobile ? bulkSearchLink.substring(0, 40) + '...' : bulkSearchLink}
+                            </a>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {commonCompany 
+                                ? `Search for all names at ${commonCompany}` 
+                                : 'Search for all names simultaneously'}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={copyBulkLink}
+                              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all min-h-[44px] bg-blue-100 hover:bg-blue-200 text-blue-700 shadow-sm hover:shadow-md"
+                            >
+                              <Copy className="w-4 h-4" />
+                              {copySuccess ? 'Copied!' : 'Copy Link'}
+                            </button>
+                            <a
+                              href={bulkSearchLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all min-h-[44px] bg-blue-500 hover:bg-blue-600 text-white shadow-sm hover:shadow-md"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Open Bulk Search
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  
                   {/* Open All Links Buttons */}
                   <div className="mb-4 flex flex-wrap gap-2">
                     <OpenAllLinksButton 
@@ -363,7 +470,11 @@ Michael Johnson"
               <div className="flex flex-wrap gap-4 justify-between items-center">
                 <div className="flex gap-4">
                   <motion.button
-                    onClick={() => setSearchHistory([])}
+                    onClick={() => {
+                      setSearchHistory([]);
+                      setBulkSearchLink(null);
+                      localStorage.removeItem('nameSearchHistory');
+                    }}
                     className="flex items-center gap-2 px-6 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors font-semibold shadow-sm hover:shadow-md"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

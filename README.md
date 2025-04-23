@@ -1,248 +1,242 @@
-# Alikel Linkgen
+# LinkForge
 
-**NOTE** : Alikel Linkgen requires a SaleNavigator license to be used purposefully.
+**NOTE**: LinkForge requires a LinkedIn Sales Navigator license to be used purposefully.
 
-**NOTE** : You can just use the demo link instead of installing it and running it locally.[ https://linkforge-alikeldev.netlify.app/dashboard](url)
+**NOTE**: You can just use the demo link instead of installing it and running it locally: [https://linkforge-alikeldev.netlify.app/dashboard](https://linkforge-alikeldev.netlify.app/dashboard)
 
-**NOTE** : will let Kei do have more AI related abilities . i dont know what yet ! but Max does has bunch of abilities on deepfit, Kei could probably do way much more stuff on linkgen, like analysis, i dont know of what, but he's clearly underused rn
-
-**NOTE** : I'll add profile creation, like there is on [https://deepfit-alikearn.com/](url), so that Kei can remember important things, like special prompts, my role, what company i work for, etc etc.
-
-**NOTE** : It's mostly a personal tool to make my job easier, most updates are made to make my life easier haha
+**NOTE**: It's mostly a personal tool to make my job easier, most updates are made to make my life easier haha
 
 ![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)
-![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white)
-![Netlify](https://img.shields.io/badge/Netlify-Functions-00C7B7?logo=netlify&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white)
+![Netlify Functions](https://img.shields.io/badge/Netlify-Functions-00C7B7?logo=netlify&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-^6.0-646CFF?logo=vite&logoColor=white)
+<!-- NOTE: Add Node.js badge if .nvmrc content is known -->
+<!-- ![Node.js](https://img.shields.io/badge/Node.js->=18-339933?logo=node.js&logoColor=white) -->
 
-<img width="1316" alt="image" src="https://github.com/user-attachments/assets/e331fc24-e937-4bda-997d-bb192d35954c" />
-
+<img width="1316" alt="LinkForge Screenshot" src="https://github.com/user-attachments/assets/e331fc24-e937-4bda-997d-bb192d35954c" />
 
 ## Overview
 
-Alikel Linkgen is a React-based LinkedIn search automation tool designed to streamline the process of finding relevant professionals on LinkedIn Sales Navigator. Unlike traditional saved searches, LinkForge allows you to generate multiple search URLs for unlimited companies in bulk, with intelligent domain validation and role-specific search patterns.
+LinkForge is a React-based automation tool designed to streamline the process of finding relevant professionals or specific individuals on LinkedIn, primarily using Sales Navigator. It allows for bulk generation of search URLs for companies or individuals, intelligent domain validation, role-specific search patterns, and AI-powered assistance.
 
-**Who is this for?** Sales professionals, recruiters, and job seekers who need to efficiently find relevant contacts across multiple companies.
+**Who is this for?** Sales professionals, recruiters, and job seekers who need to efficiently find relevant contacts across multiple companies or locate specific known individuals in bulk.
 
 ### Key Features
 
-- **Multi-Role Support** for Sales Teams, Recruiters, and Job Seekers
-- **Bulk Link Generation** for dozens of companies simultaneously
-- **AI-Powered Assistant (Kei)** for domain validation and strategy planning
-- **Domain Checker Tool** with visual grid preview and validation
-- **Search History** with cross-session persistence
-- **Export Capabilities** for team collaboration
+-   **Multi-Role Support:** Tailored workflows for Sales Teams, Recruiters, and Job Seekers.
+-   **Bulk Company Link Generation:** Generate targeted Sales Navigator searches for dozens of companies simultaneously.
+-   **Bulk Person Name Search:** Generate Sales Navigator searches for specific individuals by name, optionally filtering by a common company.
+-   **AI-Powered Assistant (Kei):** Get domain validation help, strategy planning, company analysis, and outreach advice.
+-   **Domain Checker Tool:** Visual grid preview and list view for validating company domain variations.
+-   **Company Size Buckets:** Classify companies with customizable size thresholds and manage these buckets.
+-   **Search History:** Cross-session persistence for both company and name searches (stored locally).
+-   **Export Capabilities:** Export current results or search history to CSV.
+-   **Rate-Limited Link Opening:** Safely open multiple generated links with configurable delays.
 
 ## Real-World Usage Scenarios
 
-### Sales Workflow
+### Sales Workflow (Company Search)
 
-<img width="708" alt="image" src="https://github.com/user-attachments/assets/041cc293-8683-478b-b008-459c04bb9b4e" />
-
-
+<img width="708" alt="Sales Workflow" src="https://github.com/user-attachments/assets/041cc293-8683-478b-b008-459c04bb9b4e" />
 
 As a tech sales professional:
 
-1. Input target companies in bulk (e.g., "Quadient, CyberAgent, QBurst")
-2. Select the "Sales Team" role
-3. Click "Generate Links" to create targeted searches
-4. Use "Open All Security Links" to launch searches in sequence
-5. Select and copy relevant contacts
-6. Ask Kei: "Which people should I contact considering my company sells [product]?"
-7. Get personalized outreach recommendations
+1.  Input target companies in bulk (e.g., "Quadient, CyberAgent, QBurst").
+2.  Select the "Sales Team" role.
+3.  Optionally, use the Bucket Selector to classify companies by size.
+4.  Click "Generate Links" to create targeted searches for relevant roles (Dev, Security, Finance, etc.).
+5.  Use "Open All Security Links" (or other types) to launch searches sequentially.
+6.  Ask Kei: "Analyze Quadient's security posture based on their likely tech stack."
+7.  Get insights to tailor outreach.
 
-This saves hours compared to manually searching on LinkedIn and helps focus on the most relevant prospects.
+### Recruiter Workflow (Company Search)
 
-### Recruiter Workflow
-
-<img width="701" alt="image" src="https://github.com/user-attachments/assets/5bdfd975-4f05-4069-b200-0a47f6c2e3a8" />
-
-
+<img width="701" alt="Recruiter Workflow" src="https://github.com/user-attachments/assets/5bdfd975-4f05-4069-b200-0a47f6c2e3a8" />
 
 As a technical recruiter:
 
-1. Input target companies known for engineering excellence
-2. Select the "Recruiter" role
-3. Use the bucket selector to focus on companies with larger development teams
-4. Generate links focused on engineering talent
-5. Open results in sequence to build candidate pipelines
-6. Export results for your ATS or recruitment team
+1.  Input target companies known for engineering excellence.
+2.  Select the "Recruiter" role.
+3.  Generate links focused on engineering talent, tech leaders, or finance candidates.
+4.  Use "Open All Tech Candidates Links" to build candidate pipelines.
+5.  Export results for your ATS or recruitment team.
 
-### Job Seeker Workflow
+### Job Seeker Workflow (Company Search)
 
-<img width="695" alt="image" src="https://github.com/user-attachments/assets/f73b8e40-4c07-44f6-843a-625f923a55b6" />
-
-
+<img width="695" alt="Job Seeker Workflow" src="https://github.com/user-attachments/assets/f73b8e40-4c07-44f6-843a-625f923a55b6" />
 
 As a job seeker looking for opportunities:
 
-1. Input companies you're interested in working for
-2. Select the "Job Seeker" role
-3. Generate HR contact searches
-4. Use Kei to analyze companies and suggest tailored application strategies
-5. Build your targeted application list with relevant contacts
+1.  Input companies you're interested in working for.
+2.  Select the "Job Seeker" role.
+3.  Generate HR or Finance contact searches.
+4.  Use Kei to analyze companies and suggest tailored application strategies.
+5.  Build your targeted application list with relevant contacts.
+
+### General Workflow (Person Name Search)
+
+1.  Switch to the "Name Search" mode on the dashboard.
+2.  Input a list of names (one per line, e.g., "John Smith", "Alice Leiser").
+3.  (Optional) Enter a common company name if you want to find these people specifically at that company.
+4.  Click "Generate Name Search Links".
+5.  Use the "Open All Basic Search Links" or "Open All Targeted Search Links" buttons to find these individuals on LinkedIn.
+6.  Useful for verifying contacts, finding specific stakeholders, or reconnecting with known individuals.
 
 ## Core Features
 
-### Bulk Link Generator
+### Bulk Link Generator (Company Search)
 
-
-- Input unlimited company names at once
-- Role-specific search templates that focus on relevant positions:
-  - **Sales**: Dev, Security, Finance, and Machine Identity decision-makers
-  - **Recruiter**: Tech candidates, Tech leaders, Finance candidates
-  - **Job Seeker**: Peer roles, HR contacts, Finance contacts
-- Automatic domain inference
-- Export results in CSV format
+-   Input unlimited company names at once.
+-   Role-specific search templates focus on relevant positions:
+    -   **Sales**: Dev, Security, Finance, and Machine Identity decision-makers.
+    -   **Recruiter**: Tech candidates, Tech leaders, Finance candidates.
+    -   **Job Seeker**: HR contacts, Finance contacts.
+-   Automatic domain inference and selection via the Domain Checker.
+-   Export generated links and company data (including bucket) in CSV format.
 
 ### Domain Checker Tool
 
-<img width="1440" alt="image" src="https://github.com/user-attachments/assets/b71440e3-d64a-4503-8a05-a098b228ee9d" />
+<img width="1440" alt="Domain Checker Grid View" src="https://github.com/user-attachments/assets/b71440e3-d64a-4503-8a05-a098b228ee9d" />
 
+Quickly validate potential domains for a company:
 
-The domain checker allows you to quickly validate which domain variations a company owns:
-
-- Grid view with live website previews (configurable as 2x2, 3x3, or 4x4)
-- List view for detailed management
-- Mark domains as "exists" or "not exists"
-- Filter by status
-- Export results in CSV format
-- Open grid in separate window for easier viewing
+-   **Grid View:** Live website previews in configurable layouts (2x2, 3x3, 4x4). Ideal for quick visual checks.
+-   **List View:** Detailed management of domain statuses.
+-   **Status Tracking:** Mark domains as "exists", "not exists", or leave as "unknown".
+-   **Filtering:** View domains based on their status.
+-   **Export:** Save findings (domain, status, URL) to CSV.
+-   **New Window:** Open the grid view in a separate browser window for easier comparison (requires pop-ups enabled).
 
 #### Using the Domain Checker
 
-1. Click "Check Domains" for any company
-2. View domain variations across different TLDs (.com, .io, etc.)
-3. Toggle between grid and list views
-4. Mark validity status
-5. Export findings
+1.  Click "Check Domains" on a generated company card.
+2.  View variations across common TLDs (.com, .io, .fr, etc.).
+3.  Toggle between grid and list views.
+4.  Mark validity status for each domain.
+5.  Export findings or simply close the modal (status is stored locally).
 
 ### Kei AI Assistant
 
-<img width="1440" alt="image" src="https://github.com/user-attachments/assets/29943f75-1145-481d-8950-40561fdf3ec7" />
+<img width="1440" alt="Kei AI Assistant Chat Interface" src="https://github.com/user-attachments/assets/29943f75-1145-481d-8950-40561fdf3ec7" />
 
+Kei is your integrated AI research assistant (powered by Gemini, configurable if run locally):
 
-Kei is your AI research assistant (if you run it locally, you can make him run on any model really. Gemini Flash 2 works super well):
+-   **Chat Interface:** Engage in conversations about specific companies or general strategies.
+-   **Multiple Personality Modes:** Adjust Kei's tone (Professional, Balanced, Creative).
+-   **Company Analysis:** Get insights on market position, potential tech stack, organizational structure, etc.
+-   **Domain Strategy:** Get recommendations on priority TLDs and branding implications.
+-   **Outreach Strategy:** Get advice on targeting roles, messaging angles, and competitive positioning.
+-   **Persistent History:** Conversations are saved locally by company for easy reference via a dropdown.
+-   **Contextual Awareness:** Kei understands the company and domain you are asking about.
 
-- **Chat Interface**: Engage in conversations about specific companies
-- **Multiple Personality Modes**: 
-  - Professional Mode: Business analysis with minimal playfulness
-  - Balanced Mode: Helpful insights with moderate enthusiasm
-  - Creative Mode: Innovative thinking with maximum playfulness
-- **Company Analysis**: Get insights on market position, tech stack, and structure
-- **Domain Validation**: Get recommendations on priority TLDs and alternatives
-- **Outreach Strategy**: Get advice on targeting the right roles and messaging
-- **Persistent History**: Conversations saved by company for future reference
+### Person Name Search Generator
 
-### Company Bucket Selector
+-   Input a list of names (one per line).
+-   Optionally provide a common company name to narrow the search.
+-   Generates two types of links per name:
+    -   **Basic Search:** A general LinkedIn search for the name.
+    -   **Targeted Search:** A LinkedIn search specifically looking for the name within the provided company context (if entered).
+-   Includes "Open All" buttons for both basic and targeted searches.
+-   Maintains its own persistent search history (stored locally).
 
-<img width="694" alt="image" src="https://github.com/user-attachments/assets/24e4d64f-d143-4710-878c-c11c766f62c8" />
-<img width="701" alt="image" src="https://github.com/user-attachments/assets/988e5502-4369-4993-8333-cd22e259c12b" />
+### Company Bucket Selector & Management
 
+<img width="694" alt="Company Size Bucket Selection" src="https://github.com/user-attachments/assets/24e4d64f-d143-4710-878c-c11c766f62c8" />
+<img width="701" alt="Editing Company Size Buckets" src="https://github.com/user-attachments/assets/988e5502-4369-4993-8333-cd22e259c12b" />
 
-## Company Classification System
+Classify companies based on estimated team sizes using fully customizable buckets:
 
-Classify companies based on development and security team sizes with fully customizable buckets:
-
-- **Tech Giant** (10000+ devs, 3000+ security)
-- **Major Enterprise** (5000+ devs, 1500+ security)
-- **Large Enterprise** (2000+ devs, 600+ security)
-- **Enterprise** (1000+ devs, 300+ security)
-- **Growth Plus** (500+ devs, 150+ security)
-- **Growth** (200+ devs, 60+ security)
-- **Late Startup** (100+ devs, 30+ security)
-- **Mid Startup** (50+ devs, 15+ security)
-- **Early Startup** (20+ devs, 6+ security)
-- **Pre-Seed** (0+ devs, 0+ security)
-
-### New Bucket Management Features
-
-You can now fully customize the classification system to match your specific needs:
-
-- **Edit buckets**: Modify bucket names, team size thresholds, and color coding
-- **Add buckets**: Create new company size categories with custom parameters
-- **Delete buckets**: Remove unwanted classifications from your system
-- **Reset buckets**: Return to default classifications if needed
-
-This flexible classification system helps tailor your outreach strategy to each company's scale and likely needs.
-
+-   **Default Buckets:** Ranging from "Pre-Seed" to "Tech Giant" based on Dev & Security team sizes.
+-   **Customization:**
+    -   **Edit buckets:** Modify names, thresholds, and colors.
+    -   **Add buckets:** Create new categories.
+    -   **Delete buckets:** Remove classifications.
+    -   **Reset buckets:** Restore defaults.
+-   Helps tailor outreach based on company scale. Assigned bucket is included in CSV export.
 
 ### Link Management
 
-<img width="687" alt="image" src="https://github.com/user-attachments/assets/67a86358-bd8f-4b28-8cf0-46d7d8971a32" />
+<img width="687" alt="Generated Link Card with Actions" src="https://github.com/user-attachments/assets/67a86358-bd8f-4b28-8cf0-46d7d8971a32" />
 
-
-- **Rate-Limited Opening**: Open multiple links without triggering LinkedIn's anti-bot measures
-- **Configurable Delays**: Set custom delays between opening links (1-10 seconds)
-- **Progress Tracking**: Visual indication of which links have been opened
-- **Copy-to-Clipboard**: Quick access to all URLs
+-   **Rate-Limited Opening:** Use the "Open All..." buttons with configurable delays (1-10 seconds) to open links sequentially without triggering LinkedIn's rate limits.
+-   **Progress Tracking:** Visual feedback when using the rate-limited opening feature.
+-   **Individual Opening:** Open any generated link directly.
+-   **Copy-to-Clipboard:** Quickly copy individual link URLs or descriptions.
 
 ## Technical Architecture
 
-Alikel Linkgen is built with modern web technologies:
+LinkForge leverages modern web technologies:
 
 ### Frontend
 
-- **React 18.3**: Core UI framework with hooks and context
-- **Vite**: Build tool and development server
-- **Tailwind CSS**: Utility-first styling
-- **Framer Motion**: Animations and transitions
-- **React Router**: Navigation and routing
+-   **React 18.3:** Core UI library utilizing Hooks and Context.
+-   **Vite:** Fast build tool and development server.
+-   **Tailwind CSS:** Utility-first CSS framework for styling.
+-   **Framer Motion:** Declarative animations and transitions.
+-   **React Router:** Client-side routing for navigation (`WelcomePage`, `HomePage`).
 
 ### State Management
 
-- **React Context API**: Global state management
-- **Local Storage**: Cross-session persistence for:
-  - Search history
-  - Chat conversations
-  - Company data
-  - User preferences
+-   **React Context API:** Used for global state like the current user role (`RoleContext`).
+-   **Local Storage:** Persists user data across sessions, including:
+    -   Company search history and generated links per role.
+    -   Name search history and generated links.
+    -   Kei AI chat conversations by company.
+    -   Custom company bucket configurations.
+    -   User preferences (like AI personality mode).
 
 ### AI Integration
 
-- **Netlify Functions**: Serverless backend for API integration
-- **Gemini API**: Powers the Kei assistant
-- **Context Awareness**: Ability to analyze and remember company-specific details
-- I plan on adding **moondream analysis**, so that you can show a pic to kei, like someones profile, and he gives you advice based on your question
+-   **Netlify Functions:** Serverless backend (`ai-chat.js`) acting as a proxy to the AI API.
+-   **Google Gemini API:** Powers the Kei assistant (specifically Gemini Flash 2 by default in the Netlify function). Configurable if run locally.
+-   **Context Awareness:** The backend function receives company/domain context to tailor Kei's responses.
 
 ### Responsive Design
 
-- Mobile-optimized interface
-- Adaptive layouts for different screen sizes
-- Touch-friendly controls
+-   Adapts to various screen sizes from mobile to desktop.
+-   Touch-friendly controls and mobile-optimized layouts.
 
 ## Installation & Configuration
-(unless you want to modify the way something works, no need, just use the deployed version : [https://linkforge-alikeldev.netlify.app/dashboard](url) )
+
+(Unless you want to modify the way something works, using the deployed version is recommended: [https://linkforge-alikeldev.netlify.app/dashboard](https://linkforge-alikeldev.netlify.app/dashboard))
 
 ### Prerequisites
 
-- Node.js 18+
-- npm/yarn
-- Gemini API key
+-   **Node.js:** Version recommended by the `.nvmrc` file (Requires Node.js 18+). Check with `node -v`.
+-   **npm:** Comes with Node.js. Check with `npm -v`.
+-   **Git:** For cloning the repository.
+-   **(Optional) Gemini API Key:** Required *only* if you intend to run the application locally and use the Kei AI assistant. Needed for the Netlify Function to work.
 
 ### Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/AliKelDev/Alikel-Linkgen.git
+cd Alikel-Linkgen
+
+# Install recommended Node.js version (if you use nvm)
+nvm use
 
 # Install dependencies
 npm install
 
-# Set up environment variables
+# Set up environment variables for local development (only needed for AI)
 cp .env.example .env
-# Add your Gemini API key to .env
+# Edit the .env file in the project root:
+# Add your Google Gemini API key like this:
+# GEMINI_API_KEY=your_api_key_here
 
-# Start development server
+# Start the development server (usually runs on http://localhost:3000)
 npm run dev
+
+# To build for production
+npm run build
 ```
 
 ### Environment Variables
 
-Create a `.env` file with:
-
-```
-GEMINI_API_KEY=your_api_key_here
-```
+-   `.env` file (in project root):
+    -   `GEMINI_API_KEY`: Your API key for Google Gemini. This allows the `ai-chat.js` Netlify function (or its local development equivalent) to communicate with the AI model. *Note: Using the API may incur costs based on usage.*
 
 ## Development Guide
 
@@ -250,65 +244,93 @@ GEMINI_API_KEY=your_api_key_here
 
 ```
 src/
+├── App.jsx                 # Main application component
+├── main.jsx                # Application entry point
+├── assets/                 # Static assets like SVGs
 ├── components/
-│   ├── features/
-│   │   └── linkGenerator/     # Core link generation components
-│   └── common/               # Shared components
+│   ├── common/             # Shared UI components (e.g., RoleSelector)
+│   ├── features/           # Feature-specific components
+│   │   ├── linkGenerator/  # Company search feature
+│   │   └── nameGenerator/  # Person name search feature
+│   ├── AnimatedBackground.jsx # Main layout, includes header, sidebar logic
+│   └── exportDropdown.jsx  # Export functionality UI
 ├── contexts/
-│   └── RoleContext.jsx       # Role-based functionality management
+│   └── RoleContext.jsx     # Manages user role state
+├── pages/
+│   ├── HomePage.jsx        # Main dashboard page
+│   └── WelcomePage.jsx     # Landing/introduction page
 ├── utils/
-│   └── linkUtils/            # Link generation utilities by role
-└── pages/                    # Main application pages
+│   ├── linkUtils/          # URL generation logic for company search by role
+│   │   ├── sales.js
+│   │   ├── recruiter.js
+│   │   └── jobseeker.js
+│   └── nameSearchUtils.js  # URL generation logic for name search
+└── index.css               # Tailwind base styles and custom CSS
 ```
 
 ### Key Components
 
-- `BulkLinkGenerator.jsx`: Main link generation interface
-- `GeneratedLinkCard.jsx`: Display for generated search links
-- `DomainCheckerModal.jsx`: Domain validation tool
-- `AIChatAssistant.jsx`: Kei AI interface
-- `AnimatedBackground.jsx`: UI wrapper with animations
+-   `BulkLinkGenerator.jsx`: Interface for company search.
+-   `BulkNameSearch.jsx`: Interface for person name search.
+-   `GeneratedLinkCard.jsx`: Displays results for a single company search.
+-   `DomainCheckerModal.jsx`: Modal for validating company domains.
+-   `AIChatAssistant.jsx`: Kei AI chat interface.
+-   `BucketSelector.jsx`: Component for selecting and managing company size buckets.
+-   `RoleSelector.jsx`: Allows switching between Sales, Recruiter, Job Seeker roles.
+-   `AnimatedBackground.jsx`: Wraps the application, handles layout, sidebar, header, and manages the floating AI chat bubble/window.
+-   `HomePage.jsx`: Orchestrates the main dashboard view, including metrics and switching between company/name search.
+
+### Development Commands
+
+-   `npm run dev`: Start the local development server.
+-   `npm run build`: Create a production-ready build in the `dist/` folder.
+-   `npm run lint`: Run ESLint to check code quality.
 
 ### Adding New Features
 
 #### New Role Type
 
-1. Update `RoleContext.jsx` with a new role entry
-2. Create role-specific link generators in `utils/linkUtils/`
-3. Update UI components to support the new role
+1.  Add the new role key to `ROLES` and its configuration to `ROLE_CONFIGS` in `src/contexts/RoleContext.jsx`.
+2.  Create a corresponding link generation utility file in `src/utils/linkUtils/`.
+3.  Update UI components (like `RoleSelector.jsx`, potentially `BulkLinkGenerator.jsx`) to recognize and handle the new role.
+4.  Define the specific link types for the new role in `BulkLinkGenerator.jsx` (inside `ROLE_LINK_TYPES`).
 
-#### New Search Templates
+#### New Search Template (within an existing role)
 
-1. Add new template generators to `linkUtils/[role].js`
-2. Update the UI components to display the new search types
+1.  Add a new link generation function (e.g., `generateNewTypeLink`) in the relevant role file within `src/utils/linkUtils/`.
+2.  Update the `generateLinks` function in that same file to include the new type.
+3.  Add the new link type and label to the `ROLE_LINK_TYPES` constant in `BulkLinkGenerator.jsx`.
+4.  Ensure `GeneratedLinkCard.jsx` can display the new link type correctly (it should work automatically if the structure is consistent).
+5.  Add a corresponding "Open All..." button in `BulkLinkGenerator.jsx`.
 
 ## Advanced Usage Tips
 
 ### Market Segmentation Research
 
-Use the bucket selector to identify companies within specific size ranges, then export your findings for market analysis.
+Use the **Company Bucket Selector** to estimate sizes for a list of companies, then export the results (which include the bucket classification) for market analysis or territory planning.
 
 ### Conference Preparation
 
-1. Input a list of companies attending an event
-2. Generate links for key roles you want to meet
-3. Research and plan your networking strategy
-4. Have Kei prepare personalized talking points
+1.  Input companies attending an event into the **Bulk Link Generator**.
+2.  Generate links for key roles (e.g., Sales Leaders, Tech Leaders).
+3.  Use the **Domain Checker** to quickly find their main websites.
+4.  Use **Kei AI Assistant** to get quick summaries or potential talking points for each company.
 
 ### Competitive Analysis
 
-1. Input your competitors
-2. Use the domain checker to analyze their web presence
-3. Use generated links to map their organizational structure
-4. Ask Kei to compare approaches and identify opportunities
+1.  Input competitors into the **Bulk Link Generator**.
+2.  Use the **Domain Checker** (especially the grid view) to analyze their web presence and branding consistency across TLDs.
+3.  Generate links for key departments (e.g., Sales, Engineering) to map their organizational structure.
+4.  Ask **Kei** to compare their likely strategies or tech stacks based on available information.
 
 ## What's Next
 
 Planned improvements include:
 
-- Role-specific AI assistants
-- Additional search templates
-- Agentic funcitons for Kei
+-   Ability for Kei to remember user-specific information across sessions (like preferred prompts, user's role, company, etc.) similar to profile creation.
+-   Exploring more advanced AI capabilities for Kei, potentially analysis of broader market trends or more specific profile analysis (maybe image analysis via Moondream if feasible).
+-   Adding more specific search templates based on user needs.
+-   Potentially exploring more agentic functions for Kei to perform multi-step tasks.
 
 ## License
 
@@ -316,7 +338,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgements
 
-- Developed by [AliKelDev](https://github.com/AliKelDev)
-- Built with React and Netlify
+-   Developed by [AliKelDev](https://github.com/AliKelDev)
+-   Built with React, Vite, Tailwind CSS, and Netlify Functions.
 
-NOTE : I am Alice, it's an Alias. Alice Leiser = Alikel = AKD = Jordan.M, so when Alice Leiser commits something, it's me.
+**NOTE**: I am Alice, it's an Alias. Alice Leiser = Alikel = AKD = Jordan.M, so when Alice Leiser commits something, it's me.
