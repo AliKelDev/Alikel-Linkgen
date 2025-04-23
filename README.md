@@ -88,7 +88,7 @@ As a job seeker looking for opportunities:
 
 - Input unlimited company names at once
 - Role-specific search templates that focus on relevant positions:
-  - **Sales**: Dev, Security, Finance decision-makers
+  - **Sales**: Dev, Security, Finance, and Machine Identity decision-makers
   - **Recruiter**: Tech candidates, Tech leaders, Finance candidates
   - **Job Seeker**: Peer roles, HR contacts, Finance contacts
 - Automatic domain inference
