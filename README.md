@@ -45,7 +45,7 @@ As a tech sales professional:
 1. Input target companies in bulk (e.g., "Quadient, CyberAgent, QBurst")
 2. Select the "Sales Team" role
 3. Click "Generate Links" to create targeted searches
-4. Use "Open All Security/IAM Links" to launch searches in sequence
+4. Use "Open All Security Links" to launch searches in sequence
 5. Select and copy relevant contacts
 6. Ask Kei: "Which people should I contact considering my company sells [product]?"
 7. Get personalized outreach recommendations
@@ -88,7 +88,7 @@ As a job seeker looking for opportunities:
 
 - Input unlimited company names at once
 - Role-specific search templates that focus on relevant positions:
-  - **Sales**: Dev, Security/IAM, Finance decision-makers
+  - **Sales**: Dev, Security, Finance decision-makers
   - **Recruiter**: Tech candidates, Tech leaders, Finance candidates
   - **Job Seeker**: Peer roles, HR contacts, Finance contacts
 - Automatic domain inference

@@ -1,4 +1,9 @@
 /**
+ * sales.js - src/utils/linkUtils/sales.js
+ * LinkedIn URL generator utilities for sales role
+ */
+
+/**
  * Cleans a company name by removing common suffixes and special characters
  * @param {string} companyName - The raw company name
  * @returns {string} - The cleaned company name
@@ -50,7 +55,7 @@ export const generateDevSearchLink = (company) => {
 };
 
 /**
- * Generates a LinkedIn search URL for security/IAM roles
+ * Generates a LinkedIn search URL for security roles
  * @param {string} company - The company name
  * @returns {string} - LinkedIn search URL
  */
@@ -78,7 +83,7 @@ export const generateSecurityIAMLink = (company) => {
 };
 
 /**
- * Generates a LinkedIn search URL for finance/accounting decision-makers (NEW)
+ * Generates a LinkedIn search URL for finance/accounting decision-makers
  * @param {string} company - The company name
  * @returns {string} - LinkedIn search URL
  */
@@ -108,6 +113,30 @@ export const generateFinanceLink = (company) => {
 };
 
 /**
+ * Generates a LinkedIn search URL for Machine Identity Decision Makers
+ * @param {string} company - The company name
+ * @returns {string} - LinkedIn search URL
+ */
+export const generateMachineIdentityLink = (company) => {
+  const baseUrl = 'https://www.linkedin.com/sales/search/people';
+  const queryParams = '(spellCorrectionEnabled%3Atrue%2CrecentSearchParam%3A(id%3A3196859146%2CdoLogHistory%3Atrue)%2Cfilters%3AList(' +
+    '(type%3AFUNCTION%2Cvalues%3AList(' +
+    '(id%3A1%2Ctext%3AComptabilit%25C3%25A9%2CselectionType%3AEXCLUDED)%2C' +
+    '(id%3A10%2Ctext%3AFinance%2CselectionType%3AEXCLUDED)%2C' +
+    '(id%3A12%2Ctext%3ARessources%2520humaines%2CselectionType%3AEXCLUDED)%2C' +
+    '(id%3A14%2Ctext%3AService%2520juridique%2CselectionType%3AEXCLUDED)%2C' +
+    '(id%3A15%2Ctext%3AMarketing%2CselectionType%3AEXCLUDED)%2C' +
+    '(id%3A25%2Ctext%3AVentes%2CselectionType%3AEXCLUDED)%2C' +
+    '(id%3A26%2Ctext%3ACentre%2520de%2520ressources%2520et%2520assistance%2CselectionType%3AEXCLUDED)%2C' +
+    '(id%3A3%2Ctext%3AArts%2520et%2520Design%2CselectionType%3AEXCLUDED)%2C' +
+    '(id%3A4%2Ctext%3AD%25C3%25A9veloppement%2520commercial%2CselectionType%3AEXCLUDED)))%2C' +
+    `(type%3ACURRENT_COMPANY%2Cvalues%3AList((text%3A${company}%2CselectionType%3AINCLUDED))))%2C` +
+    'keywords%3A%2528%2522IAM%2522%2520OR%2520%2522Identity%2520Access%2520Management%2522%2529%2520AND%2520%2528Director%2520OR%2520VP%2520OR%2520%2522Vice%2520President%2522%2520OR%2520Manager%2520OR%2520Head%2520OR%2520CISO%2520OR%2520%2522Chief%2520Information%2520Security%2520Officer%2522%2529)';
+
+  return `${baseUrl}?query=${queryParams}`;
+};
+
+/**
  * Generates all search links for a company (UPDATED)
  * @param {string} company - The company name
  * @param {string} domain - The company's domain
@@ -121,14 +150,19 @@ export const generateLinks = (company, domain) => {
       description: "LinkedIn Search for Development Team Members",
     },
     securityIAM: {
-      title: "Security/IAM",
+      title: "Security",
       link: generateSecurityIAMLink(company),
-      description: "LinkedIn Search for Security/IAM Decision Makers",
+      description: "LinkedIn Search for Security Decision Makers",
     },
     finance: {
       title: "Finance Decision Makers",
       link: generateFinanceLink(company),
       description: "LinkedIn Search for Finance/Accounting Decision Makers",
+    },
+    machineIdentity: {
+      title: "Machine Identity",
+      link: generateMachineIdentityLink(company),
+      description: "LinkedIn Search for Machine Identity Decision Makers",
     }
   };
 };

@@ -89,9 +89,9 @@ export const useRoleLinks = (company, domain) => {
             description: "LinkedIn Search for Development Team Members",
           },
           securityIAM: {
-            title: "Security/IAM",
+            title: "Security",
             link: generateSecurityIAMLink(company),
-            description: "LinkedIn Search for Security/IAM Decision Makers",
+            description: "LinkedIn Search for Security Decision Makers",
           }
         };
       case ROLES.RECRUITER:

@@ -1,3 +1,8 @@
+/**
+ * BulkLinkGenerator.jsx - src/components/features/linkGenerator/BulkLinkGenerator.jsx
+ * Main component for bulk link generation
+ */
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CompanyInput from './CompanyInput';
@@ -23,8 +28,9 @@ const SECONDARY_DOMAINS = [
 const ROLE_LINK_TYPES = {
     'sales': [
         { type: 'dev', label: 'Dev Search' },
-        { type: 'securityIAM', label: 'Security/IAM' },
-        { type: 'finance', label: 'Finance' }
+        { type: 'securityIAM', label: 'Security' },
+        { type: 'finance', label: 'Finance' },
+        { type: 'machineIdentity', label: 'Machine Identity' }
     ],
     'recruiter': [
         { type: 'dev', label: 'Tech Candidates' }, // Using 'dev' type for Tech Candidates

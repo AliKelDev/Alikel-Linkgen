@@ -53,7 +53,7 @@ export const generateDevSearchLink = (company) => {
 };
 
 /**
- * Generates a LinkedIn search URL for security/IAM roles
+ * Generates a LinkedIn search URL for security roles
  * @param {string} company - The company name
  * @returns {string} - LinkedIn search URL
  */
@@ -97,9 +97,9 @@ export const generateLinks = (company, domain) => {
       description: "LinkedIn Search for Development Team Members",
     },
     securityIAM: {
-      title: "Security/IAM",
+      title: "Security",
       link: generateSecurityIAMLink(company),
-      description: "LinkedIn Search for Security/IAM Decision Makers",
+      description: "LinkedIn Search for Security Decision Makers",
     }
   };
 };
