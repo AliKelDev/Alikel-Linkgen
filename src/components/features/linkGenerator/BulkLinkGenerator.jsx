@@ -1,6 +1,6 @@
 /**
  * BulkLinkGenerator.jsx - src/components/features/linkGenerator/BulkLinkGenerator.jsx
- * Main component for bulk link generation
+ * Main component for bulk link generation with Chrome extension support
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -68,16 +68,6 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Expose the handleGenerateLinks function to window for cross-component access
-    useEffect(() => {
-        window.triggerSearch = handleGenerateLinks;
-        
-        return () => {
-            // Clean up
-            delete window.triggerSearch;
-        };
-    }, []);
-
     // Load search history
     useEffect(() => {
         const savedHistory = localStorage.getItem(`searchHistory_${currentRole}`);
@@ -106,7 +96,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         }
     };
 
-    const handleGenerateLinks = async (companies) => {
+    const handleGenerateLinks = useCallback(async (companies) => {
         setLoading(true);
         
         try {
@@ -122,8 +112,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                     secondaryDomains: SECONDARY_DOMAINS,
                     selectedDomain: null,
                     links: getRoleSpecificLinks(company, PRIORITY_DOMAINS[0], role),
-                    role,
-                    devCount: '' // Initialize devCount field
+                    role
                 }));
 
                 // Store links for this role
@@ -184,7 +173,59 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [allGeneratedLinks, currentRole, updateMetrics, setNotifications, isMobile]);
+
+    // Chrome Extension Message Listener
+    useEffect(() => {
+        console.log('LinkForge: Setting up extension message listener...');
+        
+        const handleExtensionMessage = (event) => {
+            console.log('LinkForge: Received window message:', event);
+            
+            // Only process messages from our extension
+            if (event.data && event.data.type === 'LINKFORGE_DEV_COUNT') {
+                console.log('LinkForge: Processing dev count message');
+                console.log('Company:', event.data.companyName);
+                console.log('Count:', event.data.count);
+                console.log('Timestamp:', event.data.timestamp);
+                
+                // Automatically trigger a search for this company
+                const companyName = event.data.companyName;
+                console.log(`LinkForge: Auto-generating links for ${companyName} (${event.data.count} results found)`);
+                
+                // Use the existing handleGenerateLinks function
+                handleGenerateLinks([companyName]);
+                
+                // Show a notification
+                if (setNotifications) {
+                    setNotifications(prev => [...prev, {
+                        id: Date.now() + Math.random(),
+                        message: `Auto-generated links for ${companyName} (${event.data.count} LinkedIn results found)`,
+                        read: false,
+                    }]);
+                }
+            }
+        };
+
+        // Listen for messages from the extension
+        window.addEventListener('message', handleExtensionMessage);
+        
+        // Cleanup
+        return () => {
+            console.log('LinkForge: Removing extension message listener');
+            window.removeEventListener('message', handleExtensionMessage);
+        };
+    }, [handleGenerateLinks, setNotifications]);
+
+    // Expose the handleGenerateLinks function to window for cross-component access
+    useEffect(() => {
+        window.triggerSearch = handleGenerateLinks;
+        
+        return () => {
+            // Clean up
+            delete window.triggerSearch;
+        };
+    }, [handleGenerateLinks]);
 
     const saveToHistory = (companies, newLinks) => {
         const timestamp = new Date().toISOString();
@@ -251,65 +292,6 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
             handleGenerateLinks([company]);
         }
     };
-
-    // --- NEW LOGIC: Function to handle dev count changes ---
-    const handleDevCountChange = useCallback((companyId, count) => {
-        setAllGeneratedLinks(prevAllLinks => {
-            const updatedLinksForRole = (prevAllLinks[currentRole] || []).map(link => {
-                if (link.id === companyId) {
-                    return { ...link, devCount: count };
-                }
-                return link;
-            });
-            return {
-                ...prevAllLinks,
-                [currentRole]: updatedLinksForRole
-            };
-        });
-    }, [currentRole]);
-
-
-    // --- NEW LOGIC: Listener for messages from the Chrome Extension ---
-    useEffect(() => {
-        const messageListener = (event) => {
-            // We only accept messages from our own content script bridge
-            if (event.source !== window || !event.data) {
-                return;
-            }
-            const message = event.data;
-
-            if (message.type === 'LINKFORGE_DEV_COUNT') {
-                const { companyName, count } = message;
-
-                // Find the company in the current state by its name
-                const currentLinks = allGeneratedLinks[currentRole] || [];
-                const companyData = currentLinks.find(
-                    link => link.company.trim().toLowerCase() === companyName.trim().toLowerCase()
-                );
-
-                if (companyData) {
-                    // Call the state update function
-                    handleDevCountChange(companyData.id, count);
-
-                    // Show a success notification in the app
-                    setNotifications(prev => [...prev, {
-                        id: Date.now(),
-                        message: `Auto-updated count for ${companyName} to ${count}.`,
-                        read: false,
-                    }]);
-                }
-            }
-        };
-
-        // Attach the listener to the window
-        window.addEventListener('message', messageListener);
-
-        // Cleanup function to remove the listener when the component unmounts
-        return () => {
-            window.removeEventListener('message', messageListener);
-        };
-    }, [allGeneratedLinks, currentRole, handleDevCountChange, setNotifications]);
-
 
     return (
         <div className="min-h-screen py-6 md:py-12 px-4">
@@ -392,7 +374,6 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                                                 
                                                 setGeneratedLinks(updatedRoleLinks);
                                             }}
-                                            onDevCountChange={handleDevCountChange}
                                             showBucketSelector={showBucketSelector}
                                             isExpanded={expandedCard === linkData.id}
                                             onToggleExpand={() => {
