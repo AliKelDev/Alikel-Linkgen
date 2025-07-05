@@ -122,7 +122,8 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                     secondaryDomains: SECONDARY_DOMAINS,
                     selectedDomain: null,
                     links: getRoleSpecificLinks(company, PRIORITY_DOMAINS[0], role),
-                    role
+                    role,
+                    devCount: '' // Initialize devCount field
                 }));
 
                 // Store links for this role
@@ -251,6 +252,65 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         }
     };
 
+    // --- NEW LOGIC: Function to handle dev count changes ---
+    const handleDevCountChange = useCallback((companyId, count) => {
+        setAllGeneratedLinks(prevAllLinks => {
+            const updatedLinksForRole = (prevAllLinks[currentRole] || []).map(link => {
+                if (link.id === companyId) {
+                    return { ...link, devCount: count };
+                }
+                return link;
+            });
+            return {
+                ...prevAllLinks,
+                [currentRole]: updatedLinksForRole
+            };
+        });
+    }, [currentRole]);
+
+
+    // --- NEW LOGIC: Listener for messages from the Chrome Extension ---
+    useEffect(() => {
+        const messageListener = (event) => {
+            // We only accept messages from our own content script bridge
+            if (event.source !== window || !event.data) {
+                return;
+            }
+            const message = event.data;
+
+            if (message.type === 'LINKFORGE_DEV_COUNT') {
+                const { companyName, count } = message;
+
+                // Find the company in the current state by its name
+                const currentLinks = allGeneratedLinks[currentRole] || [];
+                const companyData = currentLinks.find(
+                    link => link.company.trim().toLowerCase() === companyName.trim().toLowerCase()
+                );
+
+                if (companyData) {
+                    // Call the state update function
+                    handleDevCountChange(companyData.id, count);
+
+                    // Show a success notification in the app
+                    setNotifications(prev => [...prev, {
+                        id: Date.now(),
+                        message: `Auto-updated count for ${companyName} to ${count}.`,
+                        read: false,
+                    }]);
+                }
+            }
+        };
+
+        // Attach the listener to the window
+        window.addEventListener('message', messageListener);
+
+        // Cleanup function to remove the listener when the component unmounts
+        return () => {
+            window.removeEventListener('message', messageListener);
+        };
+    }, [allGeneratedLinks, currentRole, handleDevCountChange, setNotifications]);
+
+
     return (
         <div className="min-h-screen py-6 md:py-12 px-4">
             <div className="max-w-5xl mx-auto">
@@ -332,6 +392,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                                                 
                                                 setGeneratedLinks(updatedRoleLinks);
                                             }}
+                                            onDevCountChange={handleDevCountChange}
                                             showBucketSelector={showBucketSelector}
                                             isExpanded={expandedCard === linkData.id}
                                             onToggleExpand={() => {

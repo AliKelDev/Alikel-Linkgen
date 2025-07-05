@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, ExternalLink, ChevronDown, ChevronUp, MessageSquare, Globe } from 'lucide-react';
+import { Copy, Check, ExternalLink, ChevronDown, ChevronUp, MessageSquare, Globe, Users } from 'lucide-react';
 import DomainList from './DomainList';
 import BucketSelector from '../../../components/BucketSelector';
 import { generateLinks } from '../../../components/linkUtils';
@@ -9,7 +9,8 @@ import DomainCheckerModal from './DomainCheckerModal';
 
 const GeneratedLinkCard = ({ 
     linkData, 
-    onUpdateLink, 
+    onUpdateLink,
+    onDevCountChange, // <-- NEW PROP for handling dev count changes
     showBucketSelector, 
     isExpanded, 
     onToggleExpand,
@@ -85,7 +86,7 @@ const GeneratedLinkCard = ({
                         )}
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         {/* Check Domains Button */}
                         <motion.button
                             onClick={() => setShowDomainChecker(true)}
@@ -110,6 +111,19 @@ const GeneratedLinkCard = ({
                             <span className="text-sm font-medium">Ask Kei</span>
                         </motion.button>
                         
+                        {/* --- NEW LOGIC: Input field for developer count --- */}
+                        <div className="relative">
+                            <input
+                                type="number"
+                                placeholder="Devs"
+                                value={linkData.devCount || ''}
+                                onChange={(e) => onDevCountChange(linkData.id, e.target.value)}
+                                className="w-24 p-2.5 pl-9 text-sm border-2 border-blue-200 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                                aria-label="Developer Count"
+                            />
+                            <Users className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+
                         {isMobile && (
                             <button
                                 onClick={onToggleExpand}
