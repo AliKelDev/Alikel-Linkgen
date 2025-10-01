@@ -1,6 +1,6 @@
 /**
  * BulkLinkGenerator.jsx - src/components/features/linkGenerator/BulkLinkGenerator.jsx
- * Main component for bulk link generation with Chrome extension support
+ * Main component for bulk link generation with Chrome extension integration
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -8,12 +8,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CompanyInput from './CompanyInput';
 import GeneratedLinkCard from './GeneratedLinkCard';
 import SearchHistorySection from './SearchHistorySection';
+import DevCountList from './DevCountList';
 import RoleSelector from '../../../components/common/RoleSelector';
 import { useRole } from '../../../contexts/RoleContext';
 import { generateLinks as generateSalesLinks } from '../../../utils/linkUtils/sales';
 import { generateLinks as generateRecruiterLinks } from '../../../utils/linkUtils/recruiter';
 import { generateLinks as generateJobSeekerLinks } from '../../../utils/linkUtils/jobseeker';
-import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, Chrome } from 'lucide-react';
 import OpenAllLinksButton from './OpenAllLinksButton';
 
 const PRIORITY_DOMAINS = ['.com', '.fr', '.es', '.it'];
@@ -33,12 +34,11 @@ const ROLE_LINK_TYPES = {
         { type: 'machineIdentity', label: 'Machine Identity' }
     ],
     'recruiter': [
-        { type: 'dev', label: 'Tech Candidates' }, // Using 'dev' type for Tech Candidates
+        { type: 'dev', label: 'Tech Candidates' },
         { type: 'techLeaders', label: 'Tech Leaders' },
         { type: 'financeCandidates', label: 'Finance Candidates' }
     ],
     'jobseeker': [
-        // Removed "Find Peers" as requested
         { type: 'hrContacts', label: 'HR Contacts' },
         { type: 'financeContacts', label: 'Finance Contacts' }
     ]
@@ -46,12 +46,14 @@ const ROLE_LINK_TYPES = {
 
 const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
     const [generatedLinks, setGeneratedLinks] = useState([]);
-    const [allGeneratedLinks, setAllGeneratedLinks] = useState({}); // Store links for all roles
+    const [allGeneratedLinks, setAllGeneratedLinks] = useState({});
     const [searchHistory, setSearchHistory] = useState([]);
     const { currentRole, roleConfig } = useRole();
     const [showBucketSelector, setShowBucketSelector] = useState(false);
     const [loading, setLoading] = useState(false);
     const [expandedCard, setExpandedCard] = useState(null);
+    const [extensionConnected, setExtensionConnected] = useState(false);
+    const [devCountList, setDevCountList] = useState([]);
     const scrollRef = useRef(null);
     const formRef = useRef(null);
     const [isMobile, setIsMobile] = useState(false);
@@ -75,6 +77,14 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
             setSearchHistory(JSON.parse(savedHistory));
         }
     }, [currentRole]);
+
+    // Load dev count list from localStorage
+    useEffect(() => {
+        const savedDevCounts = localStorage.getItem('linkforge_dev_counts');
+        if (savedDevCounts) {
+            setDevCountList(JSON.parse(savedDevCounts));
+        }
+    }, []);
 
     // Update displayed links when role changes
     useEffect(() => {
@@ -100,13 +110,12 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         setLoading(true);
         
         try {
-            // Create a new object to store links for all roles
             const newAllGeneratedLinks = { ...allGeneratedLinks };
             
             // Generate links for each role
             ['sales', 'recruiter', 'jobseeker'].forEach(role => {
-                const roleLinks = companies.map((company) => ({
-                    id: Date.now() + Math.random(),
+                const roleLinks = companies.map((company, index) => ({
+                    id: `${role}-${company}-${Date.now()}-${index}`,
                     company,
                     priorityDomains: PRIORITY_DOMAINS,
                     secondaryDomains: SECONDARY_DOMAINS,
@@ -115,30 +124,22 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                     role
                 }));
 
-                // Store links for this role
                 newAllGeneratedLinks[role] = roleLinks;
             });
 
-            // Update the state with all generated links
             setAllGeneratedLinks(newAllGeneratedLinks);
-            
-            // Update displayed links for current role
             setGeneratedLinks(newAllGeneratedLinks[currentRole]);
-            
-            // Save all links to history
-            saveToHistory(companies, newAllGeneratedLinks[currentRole]);
+
+            saveToHistory(companies);
             
             if (updateMetrics) {
                 updateMetrics();
             }
 
-            // Scroll to results with smooth behavior for all devices
+            // Scroll to results
             if (scrollRef.current) {
-                // For mobile devices, use a more compatible approach
                 if (isMobile) {
-                    // First scroll to top
                     window.scrollTo(0, 0);
-                    // Then to the element
                     setTimeout(() => {
                         const yOffset = scrollRef.current.getBoundingClientRect().top + window.pageYOffset - 100;
                         window.scrollTo({
@@ -147,7 +148,6 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                         });
                     }, 100);
                 } else {
-                    // Desktop behavior
                     scrollRef.current.scrollIntoView({ 
                         behavior: 'smooth', 
                         block: 'start'
@@ -157,7 +157,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
 
             // Add notification
             setNotifications(prev => [...prev, {
-                id: Date.now() + Math.random(),
+                id: `notification-${Date.now()}-${Math.random()}`,
                 message: `Generated links for ${companies.length} company${companies.length > 1 ? 'ies' : 'y'}.`,
                 read: false,
             }]);
@@ -165,7 +165,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         } catch (error) {
             console.error('Error generating links:', error);
             setNotifications(prev => [...prev, {
-                id: Date.now() + Math.random(),
+                id: `notification-error-${Date.now()}-${Math.random()}`,
                 message: 'Error generating links. Please try again.',
                 read: false,
                 error: true
@@ -175,101 +175,159 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
         }
     }, [allGeneratedLinks, currentRole, updateMetrics, setNotifications, isMobile]);
 
-    // Chrome Extension Message Listener
+    // 🦊 Chrome Extension Integration
     useEffect(() => {
-        console.log('LinkForge: Setting up extension message listener...');
+        console.log('🦊 LinkForge: Setting up Chrome extension listener...');
         
         const handleExtensionMessage = (event) => {
-            console.log('LinkForge: Received window message:', event);
-            
-            // Only process messages from our extension
-            if (event.data && event.data.type === 'LINKFORGE_DEV_COUNT') {
-                console.log('LinkForge: Processing dev count message');
-                console.log('Company:', event.data.companyName);
-                console.log('Count:', event.data.count);
-                console.log('Timestamp:', event.data.timestamp);
+            // Only process messages from our Chrome extension
+            if (event.data && 
+                event.data.type === 'LINKFORGE_DEV_COUNT' && 
+                event.data.source === 'chrome-extension') {
                 
-                // Automatically trigger a search for this company
-                const companyName = event.data.companyName;
-                console.log(`LinkForge: Auto-generating links for ${companyName} (${event.data.count} results found)`);
+                console.log('🦊 LinkForge: Received data from Chrome extension:', event.data);
                 
-                // Use the existing handleGenerateLinks function
+                const { companyName, count, sourceUrl } = event.data;
+
+                // Set extension as connected
+                setExtensionConnected(true);
+
+                // Format count for display
+                const formatCount = (num) => {
+                    if (num >= 1000) {
+                        return `${Math.floor(num / 1000)}K+`;
+                    }
+                    return num.toLocaleString();
+                };
+
+                // Store/update dev count in persistent list
+                setDevCountList(prevList => {
+                    const existingIndex = prevList.findIndex(item => item.company === companyName);
+                    let newList;
+
+                    if (existingIndex !== -1) {
+                        // Update existing entry
+                        newList = [...prevList];
+                        newList[existingIndex] = {
+                            company: companyName,
+                            count: count,
+                            timestamp: Date.now()
+                        };
+                    } else {
+                        // Add new entry
+                        newList = [...prevList, {
+                            company: companyName,
+                            count: count,
+                            timestamp: Date.now()
+                        }];
+                    }
+
+                    // Save to localStorage with error handling
+                    try {
+                        localStorage.setItem('linkforge_dev_counts', JSON.stringify(newList));
+                    } catch (e) {
+                        console.warn('Failed to save dev counts to localStorage:', e);
+                        // If quota exceeded, try saving only the most recent 100 entries
+                        try {
+                            const truncatedList = newList.slice(0, 100);
+                            localStorage.setItem('linkforge_dev_counts', JSON.stringify(truncatedList));
+                            return truncatedList;
+                        } catch (err) {
+                            console.error('Could not save even truncated dev counts:', err);
+                        }
+                    }
+                    return newList;
+                });
+
+                // Auto-generate links for the detected company
+                console.log(`🦊 LinkForge: Auto-generating links for "${companyName}" (${formatCount(count)} LinkedIn results)`);
                 handleGenerateLinks([companyName]);
-                
-                // Show a notification
-                if (setNotifications) {
-                    setNotifications(prev => [...prev, {
-                        id: Date.now() + Math.random(),
-                        message: `Auto-generated links for ${companyName} (${event.data.count} LinkedIn results found)`,
-                        read: false,
-                    }]);
-                }
+
+                // Show success notification
+                setNotifications(prev => [...prev, {
+                    id: `extension-${companyName}-${Date.now()}-${Math.random()}`,
+                    message: `🦊 Auto-detected: ${companyName} (${formatCount(count)} LinkedIn results)`,
+                    read: false,
+                }]);
+
+                // Store extension activity
+                localStorage.setItem('linkforge_extension_last_activity', JSON.stringify({
+                    company: companyName,
+                    count: count,
+                    timestamp: Date.now(),
+                    sourceUrl: sourceUrl
+                }));
             }
         };
 
-        // Listen for messages from the extension
+        // Listen for extension messages
         window.addEventListener('message', handleExtensionMessage);
         
-        // Cleanup
+        // Check if extension was recently active
+        const lastActivity = localStorage.getItem('linkforge_extension_last_activity');
+        if (lastActivity) {
+            const activity = JSON.parse(lastActivity);
+            const timeDiff = Date.now() - activity.timestamp;
+            // If activity was within last 5 minutes, consider extension connected
+            if (timeDiff < 5 * 60 * 1000) {
+                setExtensionConnected(true);
+            }
+        }
+        
         return () => {
-            console.log('LinkForge: Removing extension message listener');
+            console.log('🦊 LinkForge: Removing Chrome extension listener');
             window.removeEventListener('message', handleExtensionMessage);
         };
     }, [handleGenerateLinks, setNotifications]);
 
-    // Expose the handleGenerateLinks function to window for cross-component access
+    // Expose handleGenerateLinks globally
     useEffect(() => {
         window.triggerSearch = handleGenerateLinks;
-        
         return () => {
-            // Clean up
             delete window.triggerSearch;
         };
     }, [handleGenerateLinks]);
 
-    const saveToHistory = (companies, newLinks) => {
+    const saveToHistory = (companies) => {
         const timestamp = new Date().toISOString();
-        const newSearches = companies.map((company) => ({
-            id: Date.now() + Math.random(),
+        const newSearches = companies.map((company, index) => ({
+            id: `history-${currentRole}-${company}-${timestamp}-${index}`,
             company,
             timestamp,
             role: currentRole
         }));
 
-        // Keep only unique companies, limit to 50 most recent
         const combinedHistory = [...newSearches, ...searchHistory];
         const uniqueHistory = Array.from(
             new Map(combinedHistory.map((item) => [item.company, item])).values()
         ).slice(0, 50);
 
         setSearchHistory(uniqueHistory);
-        localStorage.setItem(`searchHistory_${currentRole}`, JSON.stringify(uniqueHistory));
 
-        // Save generated links
-        const storedLinks = localStorage.getItem(`generatedLinks_${currentRole}`);
-        const links = storedLinks ? JSON.parse(storedLinks) : [];
-        localStorage.setItem(`generatedLinks_${currentRole}`, JSON.stringify([...links, ...newLinks]));
+        try {
+            localStorage.setItem(`searchHistory_${currentRole}`, JSON.stringify(uniqueHistory));
+        } catch (e) {
+            console.warn('Failed to save search history to localStorage:', e);
+        }
+
+        // Don't store generated links in localStorage - they take too much space
+        // Links are already in memory via state, which is sufficient
     };
 
     const toggleBucketSelector = () => {
         setShowBucketSelector(!showBucketSelector);
     };
 
-    // Get link types for the current role
     const getCurrentRoleLinkTypes = () => {
         return ROLE_LINK_TYPES[currentRole] || [];
     };
 
-    // Check if links exist for the current role
     const hasLinksForCurrentRole = () => {
         return allGeneratedLinks[currentRole] && allGeneratedLinks[currentRole].length > 0;
     };
 
-    // Function to handle the search again action
     const handleSearchAgain = (company) => {
-        // Scroll to form first
         if (formRef.current) {
-            // For mobile devices, use a more robust scrolling approach
             if (isMobile) {
                 const yOffset = formRef.current.getBoundingClientRect().top + window.pageYOffset - 100;
                 window.scrollTo({
@@ -283,12 +341,10 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                 });
             }
             
-            // Slight delay to ensure scroll completes
             setTimeout(() => {
                 handleGenerateLinks([company]);
             }, 300);
         } else {
-            // If ref not available, just generate links
             handleGenerateLinks([company]);
         }
     };
@@ -304,6 +360,19 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                     <p className="text-base md:text-lg text-blue-200 mb-4">
                         {roleConfig.description}
                     </p>
+                    
+                    {/* Chrome Extension Status */}
+                    <div className="mb-4">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${
+                            extensionConnected 
+                                ? 'bg-green-500/20 text-green-300 border border-green-400/30' 
+                                : 'bg-gray-500/20 text-gray-300 border border-gray-400/30'
+                        }`}>
+                            <Chrome className="w-4 h-4" />
+                            <span>Extension {extensionConnected ? 'Connected' : 'Disconnected'}</span>
+                        </div>
+                    </div>
+                    
                     <button
                         onClick={toggleBucketSelector}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600/80 
@@ -322,7 +391,7 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                 {/* Role Selector */}
                 <RoleSelector />
 
-                {/* Main Content Card - Add ref to form section */}
+                {/* Main Content Card */}
                 <div id="search-form-section" ref={formRef} className="bg-white/80 rounded-2xl shadow-xl p-4 md:p-8 backdrop-blur-lg">
                     <CompanyInput onSubmit={handleGenerateLinks} />
 
@@ -362,7 +431,6 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                                             key={linkData.id}
                                             linkData={linkData}
                                             onUpdateLink={(updatedLink) => {
-                                                // Update both allGeneratedLinks and generatedLinks
                                                 const updatedRoleLinks = allGeneratedLinks[currentRole].map(link => 
                                                     link.id === updatedLink.id ? updatedLink : link
                                                 );
@@ -389,24 +457,31 @@ const BulkLinkGenerator = ({ updateMetrics, setNotifications }) => {
                         </AnimatePresence>
                     </div>
 
-                    {/* Search History - Pass the handleSearchAgain function */}
+                    {/* Dev Count List */}
+                    <DevCountList
+                        devCountList={devCountList}
+                        onClear={() => {
+                            setDevCountList([]);
+                            localStorage.removeItem('linkforge_dev_counts');
+                        }}
+                    />
+
+                    {/* Search History */}
                     <SearchHistorySection
                         searchHistory={searchHistory}
                         generatedLinks={generatedLinks}
                         onClearHistory={() => {
                             setSearchHistory([]);
                             localStorage.removeItem(`searchHistory_${currentRole}`);
-                            localStorage.removeItem(`generatedLinks_${currentRole}`);
-                            
-                            // Also clear the current role's generated links
+
                             setAllGeneratedLinks(prev => {
                                 const newLinks = { ...prev };
                                 delete newLinks[currentRole];
                                 return newLinks;
                             });
-                            
+
                             setGeneratedLinks([]);
-                            
+
                             if (updateMetrics) {
                                 updateMetrics();
                             }

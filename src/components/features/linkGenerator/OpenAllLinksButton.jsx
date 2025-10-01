@@ -10,6 +10,8 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
   const [openingLinks, setOpeningLinks] = useState(false);
   const [currentLinkIndex, setCurrentLinkIndex] = useState(0);
   const [openDelay, setOpenDelay] = useState(3); // Default 3 seconds delay
+  const [maxLinks, setMaxLinks] = useState('all'); // 'all' or a number
+  const [lastOpenedIndex, setLastOpenedIndex] = useState(0); // Track where we left off
   const modalRef = useRef(null);
 
   // Filter and count links safely
@@ -85,44 +87,70 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
   };
 
   // Rate-limited link opening process
-  const startRateLimitedOpening = () => {
+  const startRateLimitedOpening = (continueFrom = null) => {
     if (selectedLinks.length === 0) return;
-    
+
+    const startIndex = continueFrom !== null ? continueFrom : 0;
     setOpeningLinks(true);
-    setCurrentLinkIndex(0);
-    
+    setCurrentLinkIndex(startIndex);
+
+    // Only reset unopened links
+    const resetLinks = selectedLinks.map((link, idx) => ({
+      ...link,
+      opened: idx < startIndex ? true : false
+    }));
+    setSelectedLinks(resetLinks);
+
+    // Determine how many links to open from start index
+    const limit = maxLinks === 'all'
+      ? resetLinks.length
+      : Math.min(startIndex + parseInt(maxLinks), resetLinks.length);
+
+    // Start the opening process
+    openNextLink(startIndex, resetLinks, limit);
+  };
+
+  // Reset progress and start from beginning
+  const resetAndStart = () => {
+    setLastOpenedIndex(0);
+
     // Reset all links to "unopened" state
     const resetLinks = selectedLinks.map(link => ({
       ...link,
       opened: false
     }));
     setSelectedLinks(resetLinks);
-    
-    // Start the opening process for the first link
-    openNextLink(0, resetLinks);
+
+    startRateLimitedOpening(0);
   };
-  
+
   // Recursive function to open links with delay
-  const openNextLink = (index, links) => {
-    if (!links || index >= links.length) {
-      // All links opened
+  const openNextLink = (index, links, limit) => {
+    if (!links || index >= links.length || index >= limit) {
+      // All links opened (or reached limit)
       setOpeningLinks(false);
+      setLastOpenedIndex(index); // Save where we stopped
       return;
     }
-    
+
     // Open current link
     handleOpenSingle(links[index].link, index);
     setCurrentLinkIndex(index);
-    
+
     // Schedule next link opening
     setTimeout(() => {
-      openNextLink(index + 1, links);
+      openNextLink(index + 1, links, limit);
     }, openDelay * 1000); // Convert seconds to milliseconds
   };
 
-  // Calculate progress percentage
-  const progressPercentage = openingLinks && selectedLinks.length > 0
-    ? Math.round((currentLinkIndex / selectedLinks.length) * 100)
+  // Calculate progress percentage based on limit
+  const getTotalToOpen = () => {
+    if (maxLinks === 'all') return selectedLinks.length;
+    return Math.min(parseInt(maxLinks), selectedLinks.length);
+  };
+
+  const progressPercentage = openingLinks && getTotalToOpen() > 0
+    ? Math.round((currentLinkIndex / getTotalToOpen()) * 100)
     : 0;
 
   // Don't render if no links of this type exist
@@ -195,8 +223,24 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
                     </button>
                     
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Open every</span>
-                      <select 
+                      <span className="text-sm text-gray-600">Open</span>
+                      <select
+                        value={maxLinks}
+                        onChange={(e) => setMaxLinks(e.target.value)}
+                        className="border border-gray-300 rounded px-2 py-1 text-sm font-medium"
+                      >
+                        <option value="5">First 5</option>
+                        <option value="10">First 10</option>
+                        <option value="15">First 15</option>
+                        <option value="20">First 20</option>
+                        <option value="25">First 25</option>
+                        <option value="all">All ({selectedLinks.length})</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">every</span>
+                      <select
                         value={openDelay}
                         onChange={(e) => setOpenDelay(Number(e.target.value))}
                         className="border border-gray-300 rounded px-2 py-1 text-sm"
@@ -209,13 +253,32 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
                       </select>
                     </div>
                     
-                    <button
-                      onClick={startRateLimitedOpening}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Start Opening Links
-                    </button>
+                    {lastOpenedIndex > 0 && lastOpenedIndex < selectedLinks.length ? (
+                      <>
+                        <button
+                          onClick={() => startRateLimitedOpening(lastOpenedIndex)}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Continue from #{lastOpenedIndex + 1}
+                        </button>
+                        <button
+                          onClick={resetAndStart}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Start from Beginning
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => startRateLimitedOpening(0)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Start Opening Links
+                      </button>
+                    )}
                   </>
                 ) : (
                   <button
@@ -233,7 +296,8 @@ const OpenAllLinksButton = ({ generatedLinks, linkType, label }) => {
                 <div className="mb-4">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-blue-700">
-                      Opening link {currentLinkIndex + 1} of {selectedLinks.length}
+                      Opening link {currentLinkIndex + 1} of {getTotalToOpen()}
+                      {maxLinks !== 'all' && <span className="text-gray-500"> (limited)</span>}
                     </span>
                     <span className="text-blue-700 font-medium">{progressPercentage}%</span>
                   </div>

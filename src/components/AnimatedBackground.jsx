@@ -60,9 +60,21 @@ const AnimatedBackground = () => {
         }
     }, []);
 
-    // Persist notifications
+    // Persist notifications (limit to last 50 to avoid quota issues)
     useEffect(() => {
-        localStorage.setItem('notifications', JSON.stringify(notifications));
+        try {
+            const recentNotifications = notifications.slice(0, 50);
+            localStorage.setItem('notifications', JSON.stringify(recentNotifications));
+        } catch (e) {
+            console.warn('Failed to save notifications to localStorage:', e);
+            // If quota exceeded, clear old notifications
+            try {
+                const recentNotifications = notifications.slice(0, 20);
+                localStorage.setItem('notifications', JSON.stringify(recentNotifications));
+            } catch (err) {
+                console.error('Could not save even truncated notifications:', err);
+            }
+        }
     }, [notifications]);
 
     // Persist chat company list
