@@ -1,17 +1,16 @@
+
 # LinkForge
 
-**NOTE**: LinkForge requires a LinkedIn Sales Navigator license to be used purposefully.
-
-**NOTE**: You can just use the demo link instead of installing it and running it locally: [https://linkforge-alikeldev.netlify.app/dashboard](https://linkforge-alikeldev.netlify.app/dashboard)
-
-**NOTE**: It's mostly a personal tool to make my job easier, most updates are made to make my life easier haha
+- **NOTE**: LinkForge requires a LinkedIn Sales Navigator license to be used purposefully.
+- **NOTE**: You can just use the demo link instead of installing it and running it locally: [https://linkforge-alikeldev.netlify.app/dashboard](https://linkforge-alikeldev.netlify.app/dashboard)
+- **NOTE**: It's mostly a personal tool to make my job easier, most updates are made to make my life easier haha
+- **NOTE**: A Chrome extension is available to automate data capture from LinkedIn Sales Navigator. [See installation instructions below](#-chrome-extension).
 
 ![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white)
 ![Netlify Functions](https://img.shields.io/badge/Netlify-Functions-00C7B7?logo=netlify&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-^6.0-646CFF?logo=vite&logoColor=white)
-<!-- NOTE: Add Node.js badge if .nvmrc content is known -->
-<!-- ![Node.js](https://img.shields.io/badge/Node.js->=18-339933?logo=node.js&logoColor=white) -->
+
 
 <img width="1316" alt="LinkForge Screenshot" src="https://github.com/user-attachments/assets/e331fc24-e937-4bda-997d-bb192d35954c" />
 
@@ -27,12 +26,64 @@ LinkForge is a React-based automation tool designed to streamline the process of
 -   **Bulk Company Link Generation:** Generate targeted Sales Navigator searches for dozens of companies simultaneously.
 -   **Bulk Person Name Search:** Generate Sales Navigator searches for specific individuals by name, optionally filtering by a common company.
 -   **Combined Person Search:** Generate a single bulk search link using `OR` logic to find any of the entered individuals at once.
+-   **Chrome Extension:** Automatic data capture from LinkedIn Sales Navigator searches.
 -   **AI-Powered Assistant (Kei):** Get domain validation help, strategy planning, company analysis, and outreach advice.
 -   **Domain Checker Tool:** Visual grid preview and list view for validating company domain variations.
 -   **Company Size Buckets:** Classify companies with customizable size thresholds and manage these buckets.
 -   **Search History:** Cross-session persistence for both company and name searches (stored locally).
 -   **Export Capabilities:** Export current results or search history to CSV.
 -   **Rate-Limited Link Opening:** Safely open multiple generated links with configurable delays.
+
+## 🦊 Chrome Extension
+
+LinkForge includes a Chrome extension that automatically extracts LinkedIn Sales Navigator search results and populates them directly into your LinkForge dashboard - eliminating manual data entry.
+
+**[Download Latest Release →](https://github.com/AliKelDev/Alikel-Linkgen/releases/latest)**
+
+<!-- SCREENSHOT PLACEHOLDER: Extension popup showing green status indicators when both LinkedIn and LinkForge tabs are open -->
+
+### Features
+
+- **Automatic Data Capture**: Detects company name and developer count from Sales Navigator searches
+- **Real-Time Sync**: Instantly forwards data to your open LinkForge tab
+- **Visual Feedback**: Shows success notifications when data is captured
+- **Multi-Tab Support**: Works across multiple LinkForge windows simultaneously
+- **Status Monitoring**: Popup shows connection status for LinkedIn and LinkForge tabs
+
+### Installation
+
+1. Download [linkforge-extension.zip](https://github.com/AliKelDev/Alikel-Linkgen/releases/tag/2.0.0)
+2. Unzip the file
+3. Open Chrome and navigate to `chrome://extensions/`
+4. Enable "Developer mode" (toggle in top right)
+5. Click "Load unpacked" and select the unzipped `linkforge-extension` folder
+6. The extension icon (🦊) should appear in your toolbar
+
+<!-- SCREENSHOT PLACEHOLDER: Chrome extensions page showing the extension loaded in developer mode -->
+
+### How It Works
+
+1. Open [LinkForge](https://linkforge-alikeldev.netlify.app/dashboard)
+2. Enter a company name in LinkForge (e.g., "Google")
+3. Click one of the generated Sales Navigator links
+4. Once the search results load on LinkedIn, the extension automatically:
+   - Extracts the company name from your search query
+   - Captures the exact result count from the page
+   - Sends the data back to your LinkForge tab
+5. The developer count appears instantly in LinkForge for that company
+
+<!-- SCREENSHOT PLACEHOLDER: Side-by-side view - Sales Navigator search on left showing results, LinkForge on right showing the captured developer count appearing in real-time -->
+
+**Note**: The extension only activates on Sales Navigator search URLs and requires an active LinkForge tab to be open.
+
+### Troubleshooting
+
+- **Data not appearing?** Ensure you have LinkForge open in another tab before clicking the Sales Navigator link
+- **Extension not detecting?** Wait 2-3 seconds for the Sales Navigator page to fully load
+- **No success notification?** Check the extension is enabled in `chrome://extensions/`
+- **Multiple counts appearing?** The extension captures data from the most recent search - older searches may be cached
+
+---
 
 ## Real-World Usage Scenarios
 
@@ -47,8 +98,9 @@ As a tech sales professional:
 3.  Optionally, use the Bucket Selector to classify companies by size.
 4.  Click "Generate Links" to create targeted searches for relevant roles (Dev, Security, Finance, etc.).
 5.  Use "Open All Security Links" (or other types) to launch searches sequentially.
-6.  Ask Kei: "Analyze Quadient's security posture based on their likely tech stack."
-7.  Get insights to tailor outreach.
+6.  **With the Chrome extension**: The developer counts populate automatically as you visit each link.
+7.  Ask Kei: "Analyze Quadient's security posture based on their likely tech stack."
+8.  Get insights to tailor outreach.
 
 ### Recruiter Workflow (Company Search)
 
@@ -60,7 +112,8 @@ As a technical recruiter:
 2.  Select the "Recruiter" role.
 3.  Generate links focused on engineering talent, tech leaders, or finance candidates.
 4.  Use "Open All Tech Candidates Links" to build candidate pipelines.
-5.  Export results for your ATS or recruitment team.
+5.  **With the Chrome extension**: Developer counts are captured automatically as you review each company.
+6.  Export results for your ATS or recruitment team.
 
 ### Job Seeker Workflow (Company Search)
 
@@ -186,6 +239,13 @@ LinkForge leverages modern web technologies:
 -   **Framer Motion:** Declarative animations and transitions.
 -   **React Router:** Client-side routing for navigation (`WelcomePage`, `HomePage`).
 
+### Chrome Extension
+
+-   **Manifest V3:** Modern Chrome extension architecture.
+-   **Content Scripts:** Run on both LinkedIn Sales Navigator and LinkForge pages.
+-   **Background Service Worker:** Routes messages between content scripts.
+-   **window.postMessage API:** Secure communication between extension and React app.
+
 ### State Management
 
 -   **React Context API:** Used for global state like the current user role (`RoleContext`).
@@ -277,6 +337,13 @@ src/
 │   │   └── jobseeker.js
 │   └── nameSearchUtils.js  # URL generation logic for individual and bulk name search
 └── index.css               # Tailwind base styles and custom CSS
+
+linkforge-extension/         # Chrome extension
+├── background.js           # Service worker, message routing
+├── linkedin_content_script.js  # LinkedIn data extraction
+├── linkforge_content_script.js # LinkForge app bridge
+├── manifest.json           # Extension configuration
+└── popup.html              # Extension popup UI
 ```
 
 ### Key Components
@@ -334,6 +401,14 @@ Use the **Company Bucket Selector** to estimate sizes for a list of companies, t
 3.  Generate links for key departments (e.g., Sales, Engineering) to map their organizational structure.
 4.  Ask **Kei** to compare their likely strategies or tech stacks based on available information.
 
+### Automated Data Collection with Extension
+
+1.  Input a large list of target companies in **Bulk Link Generator**.
+2.  Click "Open All Dev Links" with 3-second delays.
+3.  As each Sales Navigator page loads, the extension captures developer counts automatically.
+4.  Review the populated data in LinkForge without manual entry.
+5.  Export the complete dataset with all captured metrics.
+
 ## What's Next
 
 Planned improvements include:
@@ -342,6 +417,7 @@ Planned improvements include:
 -   Exploring more advanced AI capabilities for Kei, potentially analysis of broader market trends or more specific profile analysis (maybe image analysis via Moondream if feasible).
 -   Adding more specific search templates based on user needs.
 -   Potentially exploring more agentic functions for Kei to perform multi-step tasks.
+-   Chrome Web Store publication for easier extension distribution and auto-updates.
 
 ## License
 
@@ -353,3 +429,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 -   Built with React, Vite, Tailwind CSS, and Netlify Functions.
 
 **NOTE**: I am Alice, it's an Alias. Alice Leiser = Alikel = AKD = Jordan.M, so when Alice Leiser commits something, it's me.
+```
