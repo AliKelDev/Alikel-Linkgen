@@ -3,7 +3,6 @@
 
 - **NOTE**: LinkForge requires a LinkedIn Sales Navigator license to be used purposefully.
 - **NOTE**: You can just use the demo link instead of installing it and running it locally: [https://linkforge-alikeldev.netlify.app/dashboard](https://linkforge-alikeldev.netlify.app/dashboard)
-- **NOTE**: It's mostly a personal tool to make my job easier, most updates are made to make my life easier haha
 - **NOTE**: A Chrome extension is available to automate data capture from LinkedIn Sales Navigator. [See installation instructions below](#-chrome-extension).
 
 ![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)
