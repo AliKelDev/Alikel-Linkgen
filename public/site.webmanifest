@@ -1,0 +1,16 @@
+{
+    "name": "LinkForge Pro",
+    "short_name": "LinkForge",
+    "description": "AI-powered LinkedIn automation tool for bulk prospect generation",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1e293b",
+    "theme_color": "#2563eb",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}
