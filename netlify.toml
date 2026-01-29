@@ -3,6 +3,10 @@
   functions = "netlify/functions"
   publish = "dist"
 
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["node_modules/@google/genai/**"]
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
