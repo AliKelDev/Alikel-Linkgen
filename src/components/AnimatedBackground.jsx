@@ -211,45 +211,54 @@ const AnimatedBackground = () => {
 
     // Chat Assistant Functions
     const openChat = async (company = null, domain = null, context = null) => {
-        // If company is provided, set as current and add to history
+        // Use 'General' as default chat key when no company specified
+        const chatKey = company || 'General';
+
+        // Set current company (null for general chat)
+        setCurrentCompany(company);
+        setCurrentDomain(domain || null);
         if (company) {
-            setCurrentCompany(company);
-            setCurrentDomain(domain || null);
             localStorage.setItem('lastChatCompany', company);
+        }
 
-            // Update company list for history
-            const currentTimestamp = new Date().toISOString();
-            const existingCompanyIndex = chatCompanyList.findIndex(item => item.company === company);
+        // Always try to load history for authenticated users
+        if (chatKey) {
 
-            if (existingCompanyIndex >= 0) {
-                // Update existing company entry
-                const updatedList = [...chatCompanyList];
-                updatedList[existingCompanyIndex] = {
-                    ...updatedList[existingCompanyIndex],
-                    lastChat: currentTimestamp,
-                    domain: domain || updatedList[existingCompanyIndex].domain
-                };
-                setChatCompanyList(updatedList);
-            } else {
-                // Add new company entry
-                setChatCompanyList([
-                    {
-                        company,
-                        domain: domain || null,
-                        lastChat: currentTimestamp
-                    },
-                    ...chatCompanyList
-                ]);
+            // Update company list for history (only for authenticated users)
+            if (isAuthenticated) {
+                const currentTimestamp = new Date().toISOString();
+                const existingCompanyIndex = chatCompanyList.findIndex(item => item.company === chatKey);
+
+                if (existingCompanyIndex >= 0) {
+                    // Update existing entry
+                    const updatedList = [...chatCompanyList];
+                    updatedList[existingCompanyIndex] = {
+                        ...updatedList[existingCompanyIndex],
+                        lastChat: currentTimestamp,
+                        domain: domain || updatedList[existingCompanyIndex].domain
+                    };
+                    setChatCompanyList(updatedList);
+                } else {
+                    // Add new entry
+                    setChatCompanyList([
+                        {
+                            company: chatKey,
+                            domain: domain || null,
+                            lastChat: currentTimestamp
+                        },
+                        ...chatCompanyList
+                    ]);
+                }
             }
 
             // Load previous chat history - only from Firebase if authenticated
             let messagesLoaded = false;
             if (isAuthenticated) {
                 try {
-                    const firebaseMessages = await chatDB.getMessages(company);
+                    const firebaseMessages = await chatDB.getMessages(chatKey);
                     if (firebaseMessages && firebaseMessages.length > 0) {
                         setMessages(firebaseMessages);
-                        localStorage.setItem(`chatHistory_${company}`, JSON.stringify(firebaseMessages));
+                        localStorage.setItem(`chatHistory_${chatKey}`, JSON.stringify(firebaseMessages));
                         messagesLoaded = true;
                     }
                 } catch (error) {
@@ -258,7 +267,7 @@ const AnimatedBackground = () => {
             }
 
             if (!messagesLoaded) {
-                // Initialize with welcome message (no persistent history for anonymous users)
+                // Initialize with welcome message
                 setMessages([{
                     id: 'welcome',
                     type: 'ai',
@@ -382,11 +391,20 @@ const AnimatedBackground = () => {
     const updateChatMessages = (newMessages) => {
         setMessages(newMessages);
         // Only persist to Firebase if authenticated
-        if (currentCompany && isAuthenticated) {
-            localStorage.setItem(`chatHistory_${currentCompany}`, JSON.stringify(newMessages));
-            chatDB.saveMessages(currentCompany, newMessages).catch(err =>
+        if (isAuthenticated) {
+            const chatKey = currentCompany || 'General';
+            localStorage.setItem(`chatHistory_${chatKey}`, JSON.stringify(newMessages));
+            chatDB.saveMessages(chatKey, newMessages).catch(err =>
                 console.warn('Failed to save messages to Firebase:', err)
             );
+
+            // Update company list if this is a new chat
+            if (!currentCompany && !chatCompanyList.some(item => item.company === 'General')) {
+                setChatCompanyList([
+                    { company: 'General', domain: null, lastChat: new Date().toISOString() },
+                    ...chatCompanyList
+                ]);
+            }
         }
     };
 
