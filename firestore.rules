@@ -2,13 +2,11 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Conversations are stored per anonymous user ID
+    // Conversations require authentication
     // Each user can only access their own conversations
     match /conversations/{userId}/{document=**} {
-      // Allow read/write only if the user ID matches their stored ID
-      // For anonymous users, we trust the client-submitted userId
-      // In production, you'd want Firebase Auth here
-      allow read, write: if true;
+      // Allow read/write only if authenticated and accessing own data
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

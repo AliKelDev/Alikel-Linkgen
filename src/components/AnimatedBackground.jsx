@@ -57,40 +57,34 @@ const AnimatedBackground = () => {
     useEffect(() => {
         const loadFromFirebase = async () => {
             try {
-                // First try to load from Firebase
-                const firebaseCompanyList = await chatDB.getConversationList();
-                if (firebaseCompanyList && firebaseCompanyList.length > 0) {
-                    setChatCompanyList(firebaseCompanyList);
-                    localStorage.setItem('chatCompanyList', JSON.stringify(firebaseCompanyList));
-                }
+                // Only load from Firebase if authenticated
+                if (isAuthenticated) {
+                    const firebaseCompanyList = await chatDB.getConversationList();
+                    if (firebaseCompanyList && firebaseCompanyList.length > 0) {
+                        setChatCompanyList(firebaseCompanyList);
+                        localStorage.setItem('chatCompanyList', JSON.stringify(firebaseCompanyList));
+                    }
 
-                // Load last chat company's messages
-                const lastChatCompany = localStorage.getItem('lastChatCompany');
-                if (lastChatCompany) {
-                    setCurrentCompany(lastChatCompany);
-                    const firebaseMessages = await chatDB.getMessages(lastChatCompany);
-                    if (firebaseMessages && firebaseMessages.length > 0) {
-                        setMessages(firebaseMessages);
-                        localStorage.setItem(`chatHistory_${lastChatCompany}`, JSON.stringify(firebaseMessages));
-                    } else {
-                        // Fallback to localStorage
-                        const storedMessages = localStorage.getItem(`chatHistory_${lastChatCompany}`);
-                        if (storedMessages) {
-                            setMessages(JSON.parse(storedMessages));
+                    // Load last chat company's messages
+                    const lastChatCompany = localStorage.getItem('lastChatCompany');
+                    if (lastChatCompany) {
+                        setCurrentCompany(lastChatCompany);
+                        const firebaseMessages = await chatDB.getMessages(lastChatCompany);
+                        if (firebaseMessages && firebaseMessages.length > 0) {
+                            setMessages(firebaseMessages);
+                            localStorage.setItem(`chatHistory_${lastChatCompany}`, JSON.stringify(firebaseMessages));
+                        } else {
+                            // Fallback to localStorage
+                            const storedMessages = localStorage.getItem(`chatHistory_${lastChatCompany}`);
+                            if (storedMessages) {
+                                setMessages(JSON.parse(storedMessages));
+                            }
                         }
                     }
                 }
+                // Anonymous users: no persistent history, just start fresh
             } catch (error) {
-                console.warn('Firebase load failed, using localStorage fallback:', error);
-                // Fallback to localStorage
-                const lastChatCompany = localStorage.getItem('lastChatCompany');
-                if (lastChatCompany) {
-                    setCurrentCompany(lastChatCompany);
-                    const storedMessages = localStorage.getItem(`chatHistory_${lastChatCompany}`);
-                    if (storedMessages) {
-                        setMessages(JSON.parse(storedMessages));
-                    }
-                }
+                console.warn('Firebase load failed:', error);
             } finally {
                 setIsFirebaseLoaded(true);
             }
@@ -100,7 +94,7 @@ const AnimatedBackground = () => {
         if (!authLoading) {
             loadFromFirebase();
         }
-    }, [user, authLoading]); // Reload when user signs in/out
+    }, [user, authLoading, isAuthenticated]); // Reload when user signs in/out
 
     // Persist notifications (limit to last 50 to avoid quota issues)
     useEffect(() => {
@@ -119,16 +113,16 @@ const AnimatedBackground = () => {
         }
     }, [notifications]);
 
-    // Persist chat company list to both localStorage and Firebase
+    // Persist chat company list to Firebase (only if authenticated)
     useEffect(() => {
-        localStorage.setItem('chatCompanyList', JSON.stringify(chatCompanyList));
-        // Only sync to Firebase after initial load
-        if (isFirebaseLoaded) {
+        // Only sync to Firebase if authenticated and after initial load
+        if (isAuthenticated && isFirebaseLoaded) {
+            localStorage.setItem('chatCompanyList', JSON.stringify(chatCompanyList));
             chatDB.saveConversationList(chatCompanyList).catch(err =>
                 console.warn('Failed to save conversation list to Firebase:', err)
             );
         }
-    }, [chatCompanyList, isFirebaseLoaded]);
+    }, [chatCompanyList, isFirebaseLoaded, isAuthenticated]);
 
     // Track mobile state
     useEffect(() => {
@@ -248,36 +242,33 @@ const AnimatedBackground = () => {
                 ]);
             }
 
-            // Load previous chat history - try Firebase first, then localStorage
+            // Load previous chat history - only from Firebase if authenticated
             let messagesLoaded = false;
-            try {
-                const firebaseMessages = await chatDB.getMessages(company);
-                if (firebaseMessages && firebaseMessages.length > 0) {
-                    setMessages(firebaseMessages);
-                    localStorage.setItem(`chatHistory_${company}`, JSON.stringify(firebaseMessages));
-                    messagesLoaded = true;
+            if (isAuthenticated) {
+                try {
+                    const firebaseMessages = await chatDB.getMessages(company);
+                    if (firebaseMessages && firebaseMessages.length > 0) {
+                        setMessages(firebaseMessages);
+                        localStorage.setItem(`chatHistory_${company}`, JSON.stringify(firebaseMessages));
+                        messagesLoaded = true;
+                    }
+                } catch (error) {
+                    console.warn('Failed to load from Firebase:', error);
                 }
-            } catch (error) {
-                console.warn('Failed to load from Firebase, trying localStorage:', error);
             }
 
             if (!messagesLoaded) {
-                const storedMessages = localStorage.getItem(`chatHistory_${company}`);
-                if (storedMessages) {
-                    setMessages(JSON.parse(storedMessages));
-                } else {
-                    // Initialize with welcome message if no history
-                    setMessages([{
-                        id: 'welcome',
-                        type: 'ai',
-                        content: `**Hi! I'm Kei** 🦊 - LinkForge's AI Research Assistant\n\n` +
-                            `I can help you with:\n` +
-                            `• **Domain Validation** (priority TLDs, alternatives)\n` +
-                            `• **Outreach Planning** (key roles, messaging strategy)\n` +
-                            `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
-                            `Ask me anything about ${company || "your target companies"}!`
-                    }]);
-                }
+                // Initialize with welcome message (no persistent history for anonymous users)
+                setMessages([{
+                    id: 'welcome',
+                    type: 'ai',
+                    content: `**Hi! I'm Kei** 🦊 - LinkForge's AI Research Assistant\n\n` +
+                        `I can help you with:\n` +
+                        `• **Domain Validation** (priority TLDs, alternatives)\n` +
+                        `• **Outreach Planning** (key roles, messaging strategy)\n` +
+                        `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
+                        `Ask me anything about ${company || "your target companies"}!`
+                }]);
             }
         }
 
@@ -300,13 +291,13 @@ const AnimatedBackground = () => {
     };
 
     const deleteConversation = (company) => {
-        // Remove the chat history from localStorage
-        localStorage.removeItem(`chatHistory_${company}`);
-
-        // Remove from Firebase
-        chatDB.deleteConversation(company).catch(err =>
-            console.warn('Failed to delete conversation from Firebase:', err)
-        );
+        // Remove from Firebase (only if authenticated)
+        if (isAuthenticated) {
+            localStorage.removeItem(`chatHistory_${company}`);
+            chatDB.deleteConversation(company).catch(err =>
+                console.warn('Failed to delete conversation from Firebase:', err)
+            );
+        }
 
         // Update the company list
         const updatedList = chatCompanyList.filter(item => item.company !== company);
@@ -376,10 +367,9 @@ const AnimatedBackground = () => {
         }];
         setMessages(newMessage);
 
-        // Save as a new conversation if company provided
-        if (company) {
+        // Save as a new conversation if company provided and authenticated
+        if (company && isAuthenticated) {
             localStorage.setItem(`chatHistory_${company}`, JSON.stringify(newMessage));
-            // Also save to Firebase
             chatDB.saveMessages(company, newMessage).catch(err =>
                 console.warn('Failed to save new conversation to Firebase:', err)
             );
@@ -391,9 +381,9 @@ const AnimatedBackground = () => {
 
     const updateChatMessages = (newMessages) => {
         setMessages(newMessages);
-        if (currentCompany) {
+        // Only persist to Firebase if authenticated
+        if (currentCompany && isAuthenticated) {
             localStorage.setItem(`chatHistory_${currentCompany}`, JSON.stringify(newMessages));
-            // Also save to Firebase
             chatDB.saveMessages(currentCompany, newMessages).catch(err =>
                 console.warn('Failed to save messages to Firebase:', err)
             );
@@ -416,6 +406,8 @@ const AnimatedBackground = () => {
         context: chatContext,
         chatHistory: chatCompanyList,
         showHistory: showChatHistory,
+        isAuthenticated,
+        signIn,
         openChat,
         closeChat,
         toggleFullscreen: toggleChatFullscreen,
@@ -714,6 +706,8 @@ const AnimatedBackground = () => {
                                         onNewChat={startNewConversation}
                                         currentCompany={currentCompany}
                                         isFullscreen={isChatFullscreen}
+                                        isAuthenticated={isAuthenticated}
+                                        onSignIn={signIn}
                                     />
                                 )}
                             </AnimatePresence>
