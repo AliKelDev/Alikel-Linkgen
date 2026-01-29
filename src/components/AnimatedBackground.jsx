@@ -7,6 +7,7 @@ import RoleSelector from './common/RoleSelector';
 import { Bot, X, Menu, Bell, Search, MessageSquare, Maximize2, Minimize2, Send, ChevronRight, ChevronDown } from 'lucide-react';
 import AIChatAssistant from './features/linkGenerator/AIChatAssistant';
 import ChatHistoryDropdown from './features/linkGenerator/ChatHistoryDropdown';
+import { chatDB } from '../firebase';
 
 // Create a context for the chat assistant
 export const ChatContext = createContext(null);
@@ -26,7 +27,7 @@ const AnimatedBackground = () => {
         const storedNotifications = localStorage.getItem('notifications');
         return storedNotifications ? JSON.parse(storedNotifications) : [];
     });
-    
+
     // Kei Chat Assistant States
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isChatFullscreen, setIsChatFullscreen] = useState(false);
@@ -40,7 +41,8 @@ const AnimatedBackground = () => {
         const storedList = localStorage.getItem('chatCompanyList');
         return storedList ? JSON.parse(storedList) : [];
     });
-    
+    const [isFirebaseLoaded, setIsFirebaseLoaded] = useState(false);
+
     const location = useLocation();
     const sidebarRef = useRef(null);
     const searchRef = useRef(null);
@@ -48,16 +50,50 @@ const AnimatedBackground = () => {
     const chatRef = useRef(null);
     const showHelpRef = useRef(showHelp);
 
-    // Load the most recent chat for persistence
+    // Load conversations from Firebase on mount
     useEffect(() => {
-        const lastChatCompany = localStorage.getItem('lastChatCompany');
-        if (lastChatCompany) {
-            setCurrentCompany(lastChatCompany);
-            const storedMessages = localStorage.getItem(`chatHistory_${lastChatCompany}`);
-            if (storedMessages) {
-                setMessages(JSON.parse(storedMessages));
+        const loadFromFirebase = async () => {
+            try {
+                // First try to load from Firebase
+                const firebaseCompanyList = await chatDB.getConversationList();
+                if (firebaseCompanyList && firebaseCompanyList.length > 0) {
+                    setChatCompanyList(firebaseCompanyList);
+                    localStorage.setItem('chatCompanyList', JSON.stringify(firebaseCompanyList));
+                }
+
+                // Load last chat company's messages
+                const lastChatCompany = localStorage.getItem('lastChatCompany');
+                if (lastChatCompany) {
+                    setCurrentCompany(lastChatCompany);
+                    const firebaseMessages = await chatDB.getMessages(lastChatCompany);
+                    if (firebaseMessages && firebaseMessages.length > 0) {
+                        setMessages(firebaseMessages);
+                        localStorage.setItem(`chatHistory_${lastChatCompany}`, JSON.stringify(firebaseMessages));
+                    } else {
+                        // Fallback to localStorage
+                        const storedMessages = localStorage.getItem(`chatHistory_${lastChatCompany}`);
+                        if (storedMessages) {
+                            setMessages(JSON.parse(storedMessages));
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Firebase load failed, using localStorage fallback:', error);
+                // Fallback to localStorage
+                const lastChatCompany = localStorage.getItem('lastChatCompany');
+                if (lastChatCompany) {
+                    setCurrentCompany(lastChatCompany);
+                    const storedMessages = localStorage.getItem(`chatHistory_${lastChatCompany}`);
+                    if (storedMessages) {
+                        setMessages(JSON.parse(storedMessages));
+                    }
+                }
+            } finally {
+                setIsFirebaseLoaded(true);
             }
-        }
+        };
+
+        loadFromFirebase();
     }, []);
 
     // Persist notifications (limit to last 50 to avoid quota issues)
@@ -77,10 +113,16 @@ const AnimatedBackground = () => {
         }
     }, [notifications]);
 
-    // Persist chat company list
+    // Persist chat company list to both localStorage and Firebase
     useEffect(() => {
         localStorage.setItem('chatCompanyList', JSON.stringify(chatCompanyList));
-    }, [chatCompanyList]);
+        // Only sync to Firebase after initial load
+        if (isFirebaseLoaded) {
+            chatDB.saveConversationList(chatCompanyList).catch(err =>
+                console.warn('Failed to save conversation list to Firebase:', err)
+            );
+        }
+    }, [chatCompanyList, isFirebaseLoaded]);
 
     // Track mobile state
     useEffect(() => {
@@ -109,7 +151,7 @@ const AnimatedBackground = () => {
                     setShowNotifications(false);
                 }
             }
-            
+
             // Don't close chat when clicking outside if it's fullscreen
             if (!isChatFullscreen && chatRef.current && !chatRef.current.contains(event.target)) {
                 // Keep chat open but minimize it
@@ -166,19 +208,19 @@ const AnimatedBackground = () => {
             )
         );
     };
-    
+
     // Chat Assistant Functions
-    const openChat = (company = null, domain = null, context = null) => {
+    const openChat = async (company = null, domain = null, context = null) => {
         // If company is provided, set as current and add to history
         if (company) {
             setCurrentCompany(company);
             setCurrentDomain(domain || null);
             localStorage.setItem('lastChatCompany', company);
-            
+
             // Update company list for history
             const currentTimestamp = new Date().toISOString();
             const existingCompanyIndex = chatCompanyList.findIndex(item => item.company === company);
-            
+
             if (existingCompanyIndex >= 0) {
                 // Update existing company entry
                 const updatedList = [...chatCompanyList];
@@ -199,52 +241,71 @@ const AnimatedBackground = () => {
                     ...chatCompanyList
                 ]);
             }
-            
-            // Load previous chat history for this company if it exists
-            const storedMessages = localStorage.getItem(`chatHistory_${company}`);
-            if (storedMessages) {
-                setMessages(JSON.parse(storedMessages));
-            } else {
-                // Initialize with welcome message if no history
-                setMessages([{
-                    id: 'welcome',
-                    type: 'ai',
-                    content: `**Hi! I'm Kei** 🦊 - LinkForge's AI Research Assistant\n\n` +
-                        `I can help you with:\n` +
-                        `• **Domain Validation** (priority TLDs, alternatives)\n` +
-                        `• **Outreach Planning** (key roles, messaging strategy)\n` +
-                        `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
-                        `Ask me anything about ${company || "your target companies"}!`
-                }]);
+
+            // Load previous chat history - try Firebase first, then localStorage
+            let messagesLoaded = false;
+            try {
+                const firebaseMessages = await chatDB.getMessages(company);
+                if (firebaseMessages && firebaseMessages.length > 0) {
+                    setMessages(firebaseMessages);
+                    localStorage.setItem(`chatHistory_${company}`, JSON.stringify(firebaseMessages));
+                    messagesLoaded = true;
+                }
+            } catch (error) {
+                console.warn('Failed to load from Firebase, trying localStorage:', error);
+            }
+
+            if (!messagesLoaded) {
+                const storedMessages = localStorage.getItem(`chatHistory_${company}`);
+                if (storedMessages) {
+                    setMessages(JSON.parse(storedMessages));
+                } else {
+                    // Initialize with welcome message if no history
+                    setMessages([{
+                        id: 'welcome',
+                        type: 'ai',
+                        content: `**Hi! I'm Kei** 🦊 - LinkForge's AI Research Assistant\n\n` +
+                            `I can help you with:\n` +
+                            `• **Domain Validation** (priority TLDs, alternatives)\n` +
+                            `• **Outreach Planning** (key roles, messaging strategy)\n` +
+                            `• **Tech Analysis** (secret management patterns, infra insights)\n\n` +
+                            `Ask me anything about ${company || "your target companies"}!`
+                    }]);
+                }
             }
         }
-        
+
         if (context) {
             setChatContext(context);
         }
-        
+
         setIsChatOpen(true);
         setShowHelp(false); // Hide the help tooltip when chat is opened
         setShowChatHistory(false); // Hide chat history dropdown when opening a chat
     };
-    
+
     const closeChat = () => {
         setIsChatOpen(false);
         setIsChatFullscreen(false);
     };
-    
+
     const toggleChatFullscreen = () => {
         setIsChatFullscreen(!isChatFullscreen);
     };
-    
+
     const deleteConversation = (company) => {
         // Remove the chat history from localStorage
         localStorage.removeItem(`chatHistory_${company}`);
-        
+
+        // Remove from Firebase
+        chatDB.deleteConversation(company).catch(err =>
+            console.warn('Failed to delete conversation from Firebase:', err)
+        );
+
         // Update the company list
         const updatedList = chatCompanyList.filter(item => item.company !== company);
         setChatCompanyList(updatedList);
-        
+
         // If deleting the current conversation, reset it
         if (currentCompany === company) {
             // Reset to welcome message
@@ -261,16 +322,16 @@ const AnimatedBackground = () => {
             setMessages(newMessage);
             updateChatMessages(newMessage);
         }
-        
+
         // If we're deleting the last chat company, clear it
         if (localStorage.getItem('lastChatCompany') === company) {
             localStorage.removeItem('lastChatCompany');
         }
-        
+
         // Close the chat history dropdown
         setShowChatHistory(false);
     };
-    
+
     const startNewConversation = (company = null, domain = null) => {
         // Clear current conversation
         if (company) {
@@ -278,7 +339,7 @@ const AnimatedBackground = () => {
             setCurrentCompany(company);
             setCurrentDomain(domain || null);
             localStorage.setItem('lastChatCompany', company);
-            
+
             // Add to company list
             const currentTimestamp = new Date().toISOString();
             setChatCompanyList([
@@ -295,7 +356,7 @@ const AnimatedBackground = () => {
             setCurrentDomain(null);
             localStorage.removeItem('lastChatCompany');
         }
-        
+
         // Reset to welcome message
         const newMessage = [{
             id: Date.now(),
@@ -308,29 +369,37 @@ const AnimatedBackground = () => {
                 `Ask me anything about ${company || "your target companies"}!`
         }];
         setMessages(newMessage);
-        
+
         // Save as a new conversation if company provided
         if (company) {
             localStorage.setItem(`chatHistory_${company}`, JSON.stringify(newMessage));
+            // Also save to Firebase
+            chatDB.saveMessages(company, newMessage).catch(err =>
+                console.warn('Failed to save new conversation to Firebase:', err)
+            );
         }
-        
+
         setShowChatHistory(false);
         setShowChatSuggestions(true);
     };
-    
+
     const updateChatMessages = (newMessages) => {
         setMessages(newMessages);
         if (currentCompany) {
             localStorage.setItem(`chatHistory_${currentCompany}`, JSON.stringify(newMessages));
+            // Also save to Firebase
+            chatDB.saveMessages(currentCompany, newMessages).catch(err =>
+                console.warn('Failed to save messages to Firebase:', err)
+            );
         }
     };
-    
+
     const toggleChatHistory = () => {
         setShowChatHistory(!showChatHistory);
     };
 
     const unreadNotificationCount = notifications.filter(notification => !notification.read).length;
-    
+
     // Provide chat context to the entire app
     const chatContextValue = {
         isOpen: isChatOpen,
@@ -374,7 +443,7 @@ const AnimatedBackground = () => {
                             dashboard-sidebar fixed inset-y-0 z-50 
                             bg-gradient-to-b from-gray-900 to-gray-800 
                             border-r border-gray-700 transition-all duration-300
-                            ${isMobile 
+                            ${isMobile
                                 ? `mobile-sidebar ${isSidebarCollapsed ? 'mobile-collapsed' : 'mobile-expanded'}`
                                 : `${isSidebarCollapsed ? 'w-16' : 'w-64'}`
                             }
@@ -441,7 +510,7 @@ const AnimatedBackground = () => {
                             <div className="flex items-center gap-2 md:gap-4">
                                 {/* Notifications */}
                                 <div className="relative" ref={notificationsRef}>
-                                    <button 
+                                    <button
                                         onClick={() => setShowNotifications(!showNotifications)}
                                         className="p-2 hover:bg-gray-100 rounded-lg relative"
                                         aria-label="Notifications"
@@ -500,10 +569,10 @@ const AnimatedBackground = () => {
                             <Routes location={location} key={location.pathname}>
                                 <Route path="/" element={<WelcomePage />} />
                                 <Route path="/dashboard" element={
-                                    <HomePage 
-                                        searchQuery={searchQuery} 
-                                        setNotifications={setNotifications} 
-                                        notifications={notifications} 
+                                    <HomePage
+                                        searchQuery={searchQuery}
+                                        setNotifications={setNotifications}
+                                        notifications={notifications}
                                     />
                                 } />
                             </Routes>
@@ -529,8 +598,8 @@ const AnimatedBackground = () => {
                         <motion.button
                             id="chat-bubble"
                             initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ 
-                                opacity: 1, 
+                            animate={{
+                                opacity: 1,
                                 scale: 1,
                                 y: [0, -10, 0],
                                 transition: {
@@ -563,7 +632,7 @@ const AnimatedBackground = () => {
                             exit={{ opacity: 0, y: 100 }}
                             className={`fixed ${isChatFullscreen ? 'inset-0 z-50' : 'bottom-6 right-6 z-50 w-96 max-w-[90vw] h-[500px] max-h-[80vh]'}`}
                         >
-                            <AIChatAssistant 
+                            <AIChatAssistant
                                 isFullscreen={isChatFullscreen}
                                 toggleFullscreen={toggleChatFullscreen}
                                 onClose={closeChat}
@@ -574,51 +643,51 @@ const AnimatedBackground = () => {
                                 showSuggestions={showChatSuggestions}
                                 setShowSuggestions={setShowChatSuggestions}
                             />
-                            
+
                             {/* Chat History Dropdown */}
-<AnimatePresence>
-    {showChatHistory && (
-        <ChatHistoryDropdown 
-            chatHistory={chatCompanyList}
-            onSelectChat={(company, domain) => openChat(company, domain)}
-            onDeleteChat={deleteConversation}
-            onNewChat={startNewConversation}
-            currentCompany={currentCompany}
-            isFullscreen={isChatFullscreen}
-        />
-    )}
-</AnimatePresence>
+                            <AnimatePresence>
+                                {showChatHistory && (
+                                    <ChatHistoryDropdown
+                                        chatHistory={chatCompanyList}
+                                        onSelectChat={(company, domain) => openChat(company, domain)}
+                                        onDeleteChat={deleteConversation}
+                                        onNewChat={startNewConversation}
+                                        currentCompany={currentCompany}
+                                        isFullscreen={isChatFullscreen}
+                                    />
+                                )}
+                            </AnimatePresence>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
                 {/* Help Button (only visible when chat is not open) */}
-{showHelp && !isChatOpen && (
-    <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl 
+                {showHelp && !isChatOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl 
             flex items-center gap-3 z-50 max-w-[90vw] md:max-w-md cursor-pointer
             ${isMobile ? 'safe-bottom' : ''}`}
-        onClick={() => openChat()}
-    >
-        <span className="text-xl flex-shrink-0">🦊</span>
-        <div className="min-w-0">
-            <p className="font-medium text-gray-900 truncate">Hi! I'm Kei - LinkForge AI</p>
-            <p className="text-sm text-gray-600 truncate">Need help with prospect research?</p>
-        </div>
-        <button
-            onClick={(e) => {
-                e.stopPropagation();
-                setShowHelp(false);
-            }}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded-full flex-shrink-0"
-            aria-label="Close help"
-        >
-            <X className="w-4 h-4" />
-        </button>
-    </motion.div>
-)}
+                        onClick={() => openChat()}
+                    >
+                        <span className="text-xl flex-shrink-0">🦊</span>
+                        <div className="min-w-0">
+                            <p className="font-medium text-gray-900 truncate">Hi! I'm Kei - LinkForge AI</p>
+                            <p className="text-sm text-gray-600 truncate">Need help with prospect research?</p>
+                        </div>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowHelp(false);
+                            }}
+                            className="p-1 text-gray-400 hover:text-gray-600 rounded-full flex-shrink-0"
+                            aria-label="Close help"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </motion.div>
+                )}
             </div>
         </ChatContext.Provider>
     );
