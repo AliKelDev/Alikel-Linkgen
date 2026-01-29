@@ -1,6 +1,7 @@
 // Firebase configuration for LinkForge Kei
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 
 const firebaseConfig = {
     apiKey: "AIzaSyC9LCG_BKNvf00Bg9AdL0t1qS2ef2lCEuk",
@@ -14,12 +15,61 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
-// Helper to get or create anonymous user ID
-const getAnonymousUserId = () => {
+// Current user state (will be updated by auth state listener)
+let currentUser = null;
+
+// Listen for auth state changes
+onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+});
+
+// Auth functions
+export const authFunctions = {
+    // Sign in with Google
+    async signInWithGoogle() {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            return result.user;
+        } catch (error) {
+            console.error('Error signing in with Google:', error);
+            throw error;
+        }
+    },
+
+    // Sign out
+    async signOutUser() {
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error('Error signing out:', error);
+            throw error;
+        }
+    },
+
+    // Get current user
+    getCurrentUser() {
+        return auth.currentUser;
+    },
+
+    // Subscribe to auth state changes
+    onAuthStateChange(callback) {
+        return onAuthStateChanged(auth, callback);
+    }
+};
+
+// Helper to get user ID (authenticated or anonymous)
+const getUserId = () => {
+    // If user is signed in, use their UID
+    if (auth.currentUser) {
+        return auth.currentUser.uid;
+    }
+    // Fallback to anonymous ID
     let userId = localStorage.getItem('kei_user_id');
     if (!userId) {
-        userId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        userId = 'anon_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
         localStorage.setItem('kei_user_id', userId);
     }
     return userId;
@@ -29,7 +79,7 @@ const getAnonymousUserId = () => {
 export const chatDB = {
     // Get user's conversation list
     async getConversationList() {
-        const userId = getAnonymousUserId();
+        const userId = getUserId();
         try {
             const docRef = doc(db, 'conversations', userId, 'metadata', 'companyList');
             const docSnap = await getDoc(docRef);
@@ -42,7 +92,7 @@ export const chatDB = {
 
     // Save user's conversation list
     async saveConversationList(companies) {
-        const userId = getAnonymousUserId();
+        const userId = getUserId();
         try {
             const docRef = doc(db, 'conversations', userId, 'metadata', 'companyList');
             await setDoc(docRef, {
@@ -56,7 +106,7 @@ export const chatDB = {
 
     // Get messages for a specific company chat
     async getMessages(company) {
-        const userId = getAnonymousUserId();
+        const userId = getUserId();
         const safeCompany = company.replace(/[\/\.#$\[\]]/g, '_');
         try {
             const docRef = doc(db, 'conversations', userId, 'chats', safeCompany);
@@ -70,7 +120,7 @@ export const chatDB = {
 
     // Save messages for a specific company chat
     async saveMessages(company, messages) {
-        const userId = getAnonymousUserId();
+        const userId = getUserId();
         const safeCompany = company.replace(/[\/\.#$\[\]]/g, '_');
         try {
             const docRef = doc(db, 'conversations', userId, 'chats', safeCompany);
@@ -85,7 +135,7 @@ export const chatDB = {
 
     // Delete a conversation
     async deleteConversation(company) {
-        const userId = getAnonymousUserId();
+        const userId = getUserId();
         const safeCompany = company.replace(/[\/\.#$\[\]]/g, '_');
         try {
             const docRef = doc(db, 'conversations', userId, 'chats', safeCompany);
@@ -93,7 +143,13 @@ export const chatDB = {
         } catch (error) {
             console.error('Error deleting conversation:', error);
         }
+    },
+
+    // Migrate anonymous data to authenticated user
+    async migrateAnonymousData(anonymousId, authenticatedId) {
+        // This could be implemented later to merge anonymous history with authenticated user
+        console.log(`Migration from ${anonymousId} to ${authenticatedId} - not yet implemented`);
     }
 };
 
-export { db, getAnonymousUserId };
+export { db, auth, getUserId };

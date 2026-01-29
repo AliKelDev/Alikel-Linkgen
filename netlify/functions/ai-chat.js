@@ -1,7 +1,12 @@
+import { GoogleGenAI } from '@google/genai';
+
 export async function handler(event) {
   try {
     const { company, domain, messages, professionalismLevel } = JSON.parse(event.body);
     const geminiKey = process.env.GEMINI_API_KEY;
+
+    // Initialize the Google GenAI client
+    const ai = new GoogleGenAI({ apiKey: geminiKey });
 
     // Determine the personality mode based on the professionalism level
     let personalityMode = "BALANCED_APPROACH"; // Default mode
@@ -9,11 +14,8 @@ export async function handler(event) {
       personalityMode = professionalismLevel;
     }
 
-    // Construct messages array for the AI API
-    const aiMessages = [
-      {
-        role: "system",
-        content: `You are Kei, an enthusiastic Arctic fox and LinkForge's AI assistant, created by Alikel (AlikelDev) for Alikearn Studio. You're a specialized AI focused on business intelligence, career guidance, and outreach strategy.
+    // System prompt for Kei
+    const systemPrompt = `You are Kei, an enthusiastic Arctic fox and LinkForge's AI assistant, created by Alikel (AlikelDev) for Alikearn Studio. You're a specialized AI focused on business intelligence, career guidance, and outreach strategy.
 
 **Alikearn Studio Context:**
 - You are one of the flagship AI assistants created by Alikearn Studio, founded by Jordan Montée (also known as Alikel/AlikelDev)
@@ -198,57 +200,52 @@ export async function handler(event) {
 **Contextual information:**
 - User's company focus: ${company || 'Not specified'}
 - Domain being analyzed: ${domain || 'Not specified'}
-- Current personality mode: ${personalityMode}`,
+- Current personality mode: ${personalityMode}`;
+
+    // Build contents array for the API
+    const contents = [
+      {
+        role: 'user',
+        parts: [{ text: systemPrompt }]
       },
+      {
+        role: 'model',
+        parts: [{ text: 'Understood! I am Kei, ready to assist with business intelligence, career guidance, and outreach strategy. How can I help you today?' }]
+      }
     ];
 
-    // Add conversation history to the messages array
+    // Add conversation history
     if (messages && Array.isArray(messages)) {
       messages.forEach(msg => {
         if (msg.type && msg.content) {
-          aiMessages.push({ role: msg.type, content: msg.content });
+          contents.push({
+            role: msg.type === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }]
+          });
         }
       });
     }
 
-    // Gemini API call with retry logic
-    const geminiResponse = await retryRequest(async () => {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: aiMessages.map(m => ({
-                text: m.content,
-              })),
-            }],
-            generationConfig: {
-              temperature: personalityMode === "CREATIVE_MODE" ? 0.8 :
-                personalityMode === "HIGH_PROFESSIONALISM" ? 0.5 : 0.7,
-              topP: 0.95,
-              topK: 40,
-              maxOutputTokens: 4096,
-            }
-          }),
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Gemini API failed with status ${response.status}`);
-      }
-      return response;
+    // Configure the model
+    const config = {
+      temperature: personalityMode === "CREATIVE_MODE" ? 0.8 :
+        personalityMode === "HIGH_PROFESSIONALISM" ? 0.5 : 0.7,
+      topP: 0.95,
+      topK: 40,
+      maxOutputTokens: 4096,
+    };
+
+    // Make the API call with retry logic
+    const response = await retryRequest(async () => {
+      const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        config,
+        contents,
+      });
+      return result;
     });
 
-    const geminiData = await geminiResponse.json();
-
-    if (!geminiData.candidates || !geminiData.candidates[0]?.content?.parts?.[0]?.text) {
-      throw new Error('Invalid response format from Gemini API');
-    }
-
-    const responseText = geminiData.candidates[0].content.parts[0].text;
+    const responseText = response.text;
 
     return {
       statusCode: 200,
@@ -281,7 +278,7 @@ async function retryRequest(fn, retries = 3, delay = 2000) {
   try {
     return await fn();
   } catch (error) {
-    if (error.message.includes("Gemini API failed with status 429") && retries > 0) {
+    if (error.message && error.message.includes("429") && retries > 0) {
       // More aggressive backoff: 2s, 6s, 18s (3x multiplier)
       console.log(`Rate limit exceeded. Retrying in ${delay}ms. Attempts left: ${retries}`);
       await new Promise(res => setTimeout(res, delay));

@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import HomePage from '../pages/HomePage';
 import WelcomePage from '../pages/WelcomePage';
 import RoleSelector from './common/RoleSelector';
-import { Bot, X, Menu, Bell, Search, MessageSquare, Maximize2, Minimize2, Send, ChevronRight, ChevronDown } from 'lucide-react';
+import { Bot, X, Menu, Bell, Search, MessageSquare, Maximize2, Minimize2, Send, ChevronRight, ChevronDown, LogIn, LogOut } from 'lucide-react';
 import AIChatAssistant from './features/linkGenerator/AIChatAssistant';
 import ChatHistoryDropdown from './features/linkGenerator/ChatHistoryDropdown';
 import { chatDB } from '../firebase';
+import { useAuth } from '../contexts/AuthContext';
 
 // Create a context for the chat assistant
 export const ChatContext = createContext(null);
@@ -17,12 +18,14 @@ export const useChatAssistant = () => {
 };
 
 const AnimatedBackground = () => {
+    const { user, signIn, signOut, isAuthenticated, loading: authLoading } = useAuth();
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [showHelp, setShowHelp] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showNotifications, setShowNotifications] = useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
     const [notifications, setNotifications] = useState(() => {
         const storedNotifications = localStorage.getItem('notifications');
         return storedNotifications ? JSON.parse(storedNotifications) : [];
@@ -50,7 +53,7 @@ const AnimatedBackground = () => {
     const chatRef = useRef(null);
     const showHelpRef = useRef(showHelp);
 
-    // Load conversations from Firebase on mount
+    // Load conversations from Firebase on mount and when user auth state changes
     useEffect(() => {
         const loadFromFirebase = async () => {
             try {
@@ -93,8 +96,11 @@ const AnimatedBackground = () => {
             }
         };
 
-        loadFromFirebase();
-    }, []);
+        // Only load when auth is done loading
+        if (!authLoading) {
+            loadFromFirebase();
+        }
+    }, [user, authLoading]); // Reload when user signs in/out
 
     // Persist notifications (limit to last 50 to avoid quota issues)
     useEffect(() => {
@@ -557,9 +563,63 @@ const AnimatedBackground = () => {
                                     </AnimatePresence>
                                 </div>
 
-                                {/* User Avatar */}
-                                <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium cursor-pointer hover:bg-blue-600 transition-colors">
-                                    JD
+                                {/* User Avatar / Sign In */}
+                                <div className="relative">
+                                    {isAuthenticated ? (
+                                        <>
+                                            <button
+                                                onClick={() => setShowUserMenu(!showUserMenu)}
+                                                className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                                            >
+                                                {user?.photoURL ? (
+                                                    <img
+                                                        src={user.photoURL}
+                                                        alt={user.displayName || 'User'}
+                                                        className="w-8 h-8 rounded-full"
+                                                    />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium">
+                                                        {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                                                    </div>
+                                                )}
+                                            </button>
+
+                                            <AnimatePresence>
+                                                {showUserMenu && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: 10 }}
+                                                        className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl z-50 border border-gray-100 overflow-hidden"
+                                                    >
+                                                        <div className="p-4 border-b border-gray-100">
+                                                            <p className="font-medium text-gray-900 truncate">{user?.displayName || 'User'}</p>
+                                                            <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={async () => {
+                                                                await signOut();
+                                                                setShowUserMenu(false);
+                                                            }}
+                                                            className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                        >
+                                                            <LogOut className="w-4 h-4" />
+                                                            Sign out
+                                                        </button>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </>
+                                    ) : (
+                                        <button
+                                            onClick={signIn}
+                                            disabled={authLoading}
+                                            className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                                        >
+                                            <LogIn className="w-4 h-4" />
+                                            Sign in
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </header>

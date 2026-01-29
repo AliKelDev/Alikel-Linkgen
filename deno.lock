@@ -23,6 +23,7 @@
         "npm:eslint-plugin-react-refresh@~0.4.14",
         "npm:eslint-plugin-react@^7.37.2",
         "npm:eslint@^9.15.0",
+        "npm:firebase@^12.8.0",
         "npm:framer-motion@^11.15.0",
         "npm:globals@^15.12.0",
         "npm:lucide-react@0.468",
