@@ -238,7 +238,7 @@ export async function handler(event) {
     // Make the API call with retry logic
     const response = await retryRequest(async () => {
       const result = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         config,
         contents,
       });
