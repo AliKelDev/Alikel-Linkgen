@@ -227,8 +227,8 @@ export async function handler(event) {
               })),
             }],
             generationConfig: {
-              temperature: personalityMode === "CREATIVE_MODE" ? 0.8 : 
-                           personalityMode === "HIGH_PROFESSIONALISM" ? 0.5 : 0.7,
+              temperature: personalityMode === "CREATIVE_MODE" ? 0.8 :
+                personalityMode === "HIGH_PROFESSIONALISM" ? 0.5 : 0.7,
               topP: 0.95,
               topK: 40,
               maxOutputTokens: 4096,
@@ -243,7 +243,7 @@ export async function handler(event) {
     });
 
     const geminiData = await geminiResponse.json();
-    
+
     if (!geminiData.candidates || !geminiData.candidates[0]?.content?.parts?.[0]?.text) {
       throw new Error('Invalid response format from Gemini API');
     }
@@ -276,15 +276,16 @@ export async function handler(event) {
   }
 }
 
-// Helper function for retries
-async function retryRequest(fn, retries = 3, delay = 500) {
+// Helper function for retries with aggressive backoff for rate limits
+async function retryRequest(fn, retries = 3, delay = 2000) {
   try {
     return await fn();
   } catch (error) {
     if (error.message.includes("Gemini API failed with status 429") && retries > 0) {
+      // More aggressive backoff: 2s, 6s, 18s (3x multiplier)
       console.log(`Rate limit exceeded. Retrying in ${delay}ms. Attempts left: ${retries}`);
       await new Promise(res => setTimeout(res, delay));
-      return retryRequest(fn, retries - 1, delay * 2);
+      return retryRequest(fn, retries - 1, delay * 3);
     }
     throw error;
   }

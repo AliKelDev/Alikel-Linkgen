@@ -29,19 +29,19 @@ const PROFESSIONALISM_LABELS = {
     [PROFESSIONALISM_LEVELS.CREATIVE]: 'Creative Mode'
 };
 
-const AIChatAssistant = ({ 
-    isFullscreen, 
-    toggleFullscreen, 
-    onClose, 
-    company, 
-    domain, 
-    messages, 
+const AIChatAssistant = ({
+    isFullscreen,
+    toggleFullscreen,
+    onClose,
+    company,
+    domain,
+    messages,
     updateMessages,
     showSuggestions,
     setShowSuggestions
 }) => {
-    const { 
-        deleteConversation, 
+    const {
+        deleteConversation,
         startNewConversation,
         toggleChatHistory,
         showHistory
@@ -54,10 +54,13 @@ const AIChatAssistant = ({
     const [newChatCompany, setNewChatCompany] = useState('');
     const [newChatDomain, setNewChatDomain] = useState('');
     const [professionalismLevel, setProfessionalismLevel] = useState(PROFESSIONALISM_LEVELS.BALANCED);
+    const [cooldownActive, setCooldownActive] = useState(false);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const loadingTimerRef = useRef(null);
-    
+    const requestInFlightRef = useRef(false); // Mutex to prevent parallel requests
+    const cooldownTimerRef = useRef(null);
+
     // Auto focus the input when chat opens
     useEffect(() => {
         if (inputRef.current) {
@@ -65,11 +68,14 @@ const AIChatAssistant = ({
         }
     }, []);
 
-    // Cleanup loading timer if component unmounts
+    // Cleanup timers if component unmounts
     useEffect(() => {
         return () => {
             if (loadingTimerRef.current) {
                 clearTimeout(loadingTimerRef.current);
+            }
+            if (cooldownTimerRef.current) {
+                clearTimeout(cooldownTimerRef.current);
             }
         };
     }, []);
@@ -87,6 +93,19 @@ const AIChatAssistant = ({
     const handleSendMessage = async () => {
         if (!currentMessage.trim()) return;
 
+        // Prevent parallel requests (mutex)
+        if (requestInFlightRef.current) {
+            console.log('Request already in flight, ignoring');
+            return;
+        }
+
+        // Prevent rapid-fire requests (cooldown)
+        if (cooldownActive) {
+            console.log('Cooldown active, please wait');
+            return;
+        }
+
+        requestInFlightRef.current = true;
         setIsLoading(true);
         const userMessage = {
             id: Date.now(),
@@ -132,12 +151,20 @@ const AIChatAssistant = ({
                 isError: true
             }]);
         } finally {
+            // Release the mutex
+            requestInFlightRef.current = false;
             // Ensure loading state is properly reset
             setIsLoading(false);
             // Clear any existing timer
             if (loadingTimerRef.current) {
                 clearTimeout(loadingTimerRef.current);
             }
+
+            // Start cooldown period (3 seconds)
+            setCooldownActive(true);
+            cooldownTimerRef.current = setTimeout(() => {
+                setCooldownActive(false);
+            }, 3000);
         }
     };
 
@@ -150,7 +177,7 @@ const AIChatAssistant = ({
 
     const handleTextareaChange = (e) => {
         setCurrentMessage(e.target.value);
-        
+
         // Auto-resize the textarea based on content
         e.target.style.height = 'auto';
         e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
@@ -162,7 +189,7 @@ const AIChatAssistant = ({
             setShowDeleteConfirm(false);
         }
     };
-    
+
     const handleCreateNewChat = () => {
         if (newChatCompany.trim()) {
             startNewConversation(newChatCompany.trim(), newChatDomain.trim() || null);
@@ -176,7 +203,7 @@ const AIChatAssistant = ({
     };
 
     const getProfileModeColor = () => {
-        switch(professionalismLevel) {
+        switch (professionalismLevel) {
             case PROFESSIONALISM_LEVELS.HIGH:
                 return 'bg-blue-700';
             case PROFESSIONALISM_LEVELS.BALANCED:
@@ -191,7 +218,7 @@ const AIChatAssistant = ({
     // Chat suggestions based on common business inquiries
     const renderSuggestions = () => {
         if (!showSuggestions || messages.length > 1) return null;
-        
+
         const suggestions = [
             "Can you analyze this company's market position?",
             "What outreach strategy would you recommend?",
@@ -199,7 +226,7 @@ const AIChatAssistant = ({
             "What technologies might this company be using?",
             "How can I improve my LinkedIn prospecting?"
         ];
-        
+
         return (
             <div className="mt-4 space-y-2">
                 <p className="text-sm text-gray-500">Try asking:</p>
@@ -228,19 +255,17 @@ const AIChatAssistant = ({
     };
 
     return (
-        <motion.div 
+        <motion.div
             layout
-            className={`flex flex-col bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-2xl overflow-hidden border border-blue-200 ${
-                isFullscreen ? 'w-full h-full' : 'w-full h-full'
-            }`}
+            className={`flex flex-col bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-2xl overflow-hidden border border-blue-200 ${isFullscreen ? 'w-full h-full' : 'w-full h-full'
+                }`}
             initial={false}
         >
             {/* Header */}
-            <div className={`flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white transition-colors ${
-                professionalismLevel === PROFESSIONALISM_LEVELS.HIGH ? 'from-blue-700 to-blue-800' :
+            <div className={`flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white transition-colors ${professionalismLevel === PROFESSIONALISM_LEVELS.HIGH ? 'from-blue-700 to-blue-800' :
                 professionalismLevel === PROFESSIONALISM_LEVELS.CREATIVE ? 'from-indigo-500 to-purple-600' :
-                'from-blue-600 to-blue-700'
-            }`}>
+                    'from-blue-600 to-blue-700'
+                }`}>
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-2xl">
                         🦊
@@ -249,16 +274,16 @@ const AIChatAssistant = ({
                         <h3 className="font-bold text-lg">Kei</h3>
                         <p className="text-xs text-blue-100">
                             {company ? `Analyzing ${company}` : 'LinkForge AI Assistant'}
-                            {professionalismLevel !== PROFESSIONALISM_LEVELS.BALANCED && 
+                            {professionalismLevel !== PROFESSIONALISM_LEVELS.BALANCED &&
                                 ` · ${PROFESSIONALISM_LABELS[professionalismLevel]}`
                             }
                         </p>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                     {/* New Chat Button */}
-                    <button 
+                    <button
                         onClick={() => setShowNewChatModal(true)}
                         className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
                         aria-label="New chat"
@@ -266,9 +291,9 @@ const AIChatAssistant = ({
                     >
                         <PlusCircle className="w-5 h-5" />
                     </button>
-                    
+
                     {/* History Button */}
-                    <button 
+                    <button
                         onClick={toggleChatHistory}
                         className={`p-2 hover:bg-blue-500 rounded-lg transition-colors ${showHistory ? 'bg-blue-500' : ''}`}
                         aria-label="Chat history"
@@ -276,9 +301,9 @@ const AIChatAssistant = ({
                     >
                         <History className="w-5 h-5" />
                     </button>
-                    
+
                     {/* Delete Button */}
-                    <button 
+                    <button
                         onClick={() => setShowDeleteConfirm(true)}
                         className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
                         aria-label="Delete conversation"
@@ -286,8 +311,8 @@ const AIChatAssistant = ({
                     >
                         <Trash2 className="w-5 h-5" />
                     </button>
-                    
-                    <button 
+
+                    <button
                         onClick={() => setShowSettings(!showSettings)}
                         className="p-2 hover:bg-blue-500 rounded-lg transition-colors relative"
                         aria-label="Settings"
@@ -297,7 +322,7 @@ const AIChatAssistant = ({
                             <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-400"></span>
                         )}
                     </button>
-                    <button 
+                    <button
                         onClick={toggleFullscreen}
                         className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
                         aria-label={isFullscreen ? "Minimize" : "Maximize"}
@@ -308,7 +333,7 @@ const AIChatAssistant = ({
                             <Maximize2 className="w-5 h-5" />
                         )}
                     </button>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-2 hover:bg-blue-500 rounded-lg transition-colors"
                         aria-label="Close chat"
@@ -317,7 +342,7 @@ const AIChatAssistant = ({
                     </button>
                 </div>
             </div>
-            
+
             {/* Settings Panel */}
             <AnimatePresence>
                 {showSettings && (
@@ -334,24 +359,22 @@ const AIChatAssistant = ({
                                     <button
                                         key={level}
                                         onClick={() => setProfessionalismLevel(level)}
-                                        className={`p-3 rounded-lg flex flex-col items-center gap-2 text-sm transition-all ${
-                                            professionalismLevel === level
-                                                ? `${level === PROFESSIONALISM_LEVELS.HIGH 
-                                                    ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-700' 
-                                                    : level === PROFESSIONALISM_LEVELS.CREATIVE
-                                                        ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-500'
-                                                        : 'bg-blue-100 text-blue-700 ring-2 ring-blue-500'
-                                                }`
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                    >
-                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                            level === PROFESSIONALISM_LEVELS.HIGH 
-                                                ? 'bg-blue-700 text-white' 
+                                        className={`p-3 rounded-lg flex flex-col items-center gap-2 text-sm transition-all ${professionalismLevel === level
+                                            ? `${level === PROFESSIONALISM_LEVELS.HIGH
+                                                ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-700'
                                                 : level === PROFESSIONALISM_LEVELS.CREATIVE
-                                                    ? 'bg-indigo-500 text-white'
-                                                    : 'bg-blue-500 text-white'
-                                        }`}>
+                                                    ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-500'
+                                                    : 'bg-blue-100 text-blue-700 ring-2 ring-blue-500'
+                                            }`
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${level === PROFESSIONALISM_LEVELS.HIGH
+                                            ? 'bg-blue-700 text-white'
+                                            : level === PROFESSIONALISM_LEVELS.CREATIVE
+                                                ? 'bg-indigo-500 text-white'
+                                                : 'bg-blue-500 text-white'
+                                            }`}>
                                             {professionalismLevel === level ? (
                                                 <Check className="w-4 h-4" />
                                             ) : level === PROFESSIONALISM_LEVELS.HIGH ? (
@@ -369,8 +392,8 @@ const AIChatAssistant = ({
                                 ))}
                             </div>
                             <p className="mt-3 text-xs text-gray-500">
-                                {professionalismLevel === PROFESSIONALISM_LEVELS.HIGH 
-                                    ? "Professional mode focuses on business analysis with minimal playfulness." 
+                                {professionalismLevel === PROFESSIONALISM_LEVELS.HIGH
+                                    ? "Professional mode focuses on business analysis with minimal playfulness."
                                     : professionalismLevel === PROFESSIONALISM_LEVELS.CREATIVE
                                         ? "Creative mode encourages innovative thinking with maximum playfulness."
                                         : "Balanced mode provides helpful insights with moderate enthusiasm."
@@ -380,7 +403,7 @@ const AIChatAssistant = ({
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             {/* Delete Confirmation Dialog */}
             <AnimatePresence>
                 {showDeleteConfirm && (
@@ -413,7 +436,7 @@ const AIChatAssistant = ({
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             {/* New Chat Modal */}
             <AnimatePresence>
                 {showNewChatModal && (
@@ -465,7 +488,7 @@ const AIChatAssistant = ({
                     </motion.div>
                 )}
             </AnimatePresence>
-            
+
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 <AnimatePresence initial={false}>
@@ -487,16 +510,16 @@ const AIChatAssistant = ({
                                         🦊
                                     </div>
                                 )}
-                                
+
                                 {message.type === 'user' && (
                                     <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center mt-1">
                                         <User className="w-4 h-4 text-gray-600" />
                                     </div>
                                 )}
-                                
+
                                 <div className={`
-                                    py-3 px-4 rounded-2xl break-words ${message.isError ? 'bg-red-100 text-red-700' : 
-                                    message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white shadow-sm border border-gray-100'}
+                                    py-3 px-4 rounded-2xl break-words ${message.isError ? 'bg-red-100 text-red-700' :
+                                        message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white shadow-sm border border-gray-100'}
                                 `}>
                                     <div className="whitespace-pre-wrap">
                                         {message.content.split(/(\*\*.*?\*\*|\*.*?\*|_.*?_)/g).map((part, index) => {
@@ -528,7 +551,7 @@ const AIChatAssistant = ({
                         </motion.div>
                     ))}
                 </AnimatePresence>
-                
+
                 {/* Loading Animation - Fixed with separate AnimatePresence */}
                 <AnimatePresence mode="wait">
                     {isLoading && (
@@ -568,13 +591,13 @@ const AIChatAssistant = ({
                         </motion.div>
                     )}
                 </AnimatePresence>
-                
+
                 {/* Suggestions */}
                 {renderSuggestions()}
-                
+
                 <div ref={messagesEndRef} />
             </div>
-            
+
             {/* Input Area */}
             <div className="p-4 border-t border-blue-200 bg-white">
                 <div className="flex items-end gap-2">
@@ -587,15 +610,14 @@ const AIChatAssistant = ({
                         className="flex-1 resize-none p-3 rounded-xl border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all min-h-[56px] max-h-32"
                         rows={1}
                     />
-                    
+
                     <motion.button
                         onClick={handleSendMessage}
                         disabled={!currentMessage.trim() || isLoading}
-                        className={`p-3 rounded-xl ${
-                            currentMessage.trim() && !isLoading
-                                ? `${getProfileModeColor()} hover:bg-opacity-90`
-                                : 'bg-gray-300 cursor-not-allowed'
-                        } text-white flex-shrink-0 shadow-sm`}
+                        className={`p-3 rounded-xl ${currentMessage.trim() && !isLoading
+                            ? `${getProfileModeColor()} hover:bg-opacity-90`
+                            : 'bg-gray-300 cursor-not-allowed'
+                            } text-white flex-shrink-0 shadow-sm`}
                         whileTap={{ scale: 0.95 }}
                     >
                         {isLoading ? (
