@@ -81,12 +81,15 @@ export const chatDB = {
     // Get user's conversation list
     async getConversationList() {
         const userId = getUserId();
+        console.log('[ChatDB] getConversationList - userId:', userId);
         try {
             const docRef = doc(db, 'conversations', userId, 'metadata', 'companyList');
             const docSnap = await getDoc(docRef);
-            return docSnap.exists() ? docSnap.data().companies : [];
+            const result = docSnap.exists() ? docSnap.data().companies : [];
+            console.log('[ChatDB] getConversationList - result:', result);
+            return result;
         } catch (error) {
-            console.error('Error fetching conversation list:', error);
+            console.error('[ChatDB] Error fetching conversation list:', error);
             return [];
         }
     },
@@ -94,14 +97,16 @@ export const chatDB = {
     // Save user's conversation list
     async saveConversationList(companies) {
         const userId = getUserId();
+        console.log('[ChatDB] saveConversationList - userId:', userId, 'companies:', companies);
         try {
             const docRef = doc(db, 'conversations', userId, 'metadata', 'companyList');
             await setDoc(docRef, {
                 companies,
                 updatedAt: serverTimestamp()
             });
+            console.log('[ChatDB] saveConversationList - saved successfully');
         } catch (error) {
-            console.error('Error saving conversation list:', error);
+            console.error('[ChatDB] Error saving conversation list:', error);
         }
     },
 
@@ -123,14 +128,16 @@ export const chatDB = {
     async saveMessages(company, messages) {
         const userId = getUserId();
         const safeCompany = company.replace(/[\/\.#$\[\]]/g, '_');
+        console.log('[ChatDB] saveMessages - userId:', userId, 'company:', safeCompany, 'messageCount:', messages.length);
         try {
             const docRef = doc(db, 'conversations', userId, 'chats', safeCompany);
             await setDoc(docRef, {
                 messages,
                 updatedAt: serverTimestamp()
             });
+            console.log('[ChatDB] saveMessages - saved successfully');
         } catch (error) {
-            console.error('Error saving messages:', error);
+            console.error('[ChatDB] Error saving messages:', error);
         }
     },
 
