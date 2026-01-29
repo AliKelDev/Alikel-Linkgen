@@ -3,13 +3,14 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 
+// Firebase config from environment variables
 const firebaseConfig = {
-    apiKey: "AIzaSyC9LCG_BKNvf00Bg9AdL0t1qS2ef2lCEuk",
-    authDomain: "linkforge-kei.firebaseapp.com",
-    projectId: "linkforge-kei",
-    storageBucket: "linkforge-kei.firebasestorage.app",
-    messagingSenderId: "511986102536",
-    appId: "1:511986102536:web:b933c06ac7523d627dfcbd"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
